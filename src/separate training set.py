@@ -8,10 +8,6 @@ labels = pd.DataFrame(demographic['group'])
 labels.columns = ['labels']
 instances = demographic.drop('group', axis=1)
 
-# converting all features to numbers to be compatible with numpy
-instances['gender'], mapping_gender = pd.factorize(instances['gender'])
-mapping_gender
-
 phone_info = pd.read_csv("data/phone_brand_device_model.csv")
 app_info = pd.read_csv("data/app_labels.csv")
 app_events = pd.read_csv("data/app_events.csv")
@@ -24,6 +20,13 @@ data = data.merge(phone_info, how='left', on='device_id')
 data = data.merge(app_events, how='left', on='event_id')
 data = data.merge(app_info, how='left', on='app_id')
 data = data.merge(label_categories, how='left', on='label_id')
+
+# converting all features to numbers to be compatible with numpy
+data['gender'], map_gender = pd.factorize(data['gender'])
+data['phone_brand'], map_phone_brand = pd.factorize(data['phone_brand'])
+data['device_model'], map_device_model = pd.factorize(data['device_model'])
+data['category'], map_category = pd.factorize(data['category'])
+
 
 data.head(10)
 len(data)
