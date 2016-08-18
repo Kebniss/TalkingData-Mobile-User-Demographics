@@ -3,21 +3,35 @@ and labels and saves them in two separate files"""
 import pandas as pd
 import pickle as pkl
 
-data = pd.read_csv("data/gender_age_train.csv")
-labels = pd.DataFrame(data['group'])
+demographic = pd.read_csv("data/gender_age_train.csv")
+labels = pd.DataFrame(demographic['group'])
 labels.columns = ['labels']
-instances = data.drop('group', axis=1)
+instances = demographic.drop('group', axis=1)
 
 # converting all features to numbers to be compatible with numpy
 instances['gender'], mapping_gender = pd.factorize(instances['gender'])
 mapping_gender
-instances['device_id'], mapping_dev_id = pd.factorize(instances['device_id'])
-mapping_dev_id
 
+phone_info = pd.read_csv("data/phone_brand_device_model.csv")
+app_info = pd.read_csv("data/app_labels.csv")
+app_events = pd.read_csv("data/app_events.csv")
+label_categories = pd.read_csv("data/label_categories.csv")
+events = pd.read_csv("data/events.csv")
+
+# join all the datasets to create the raw training datasets
+data = pd.merge(instances, events, how='left', on='device_id')
+data = data.merge(phone_info, how='left', on='device_id')
+data = data.merge(app_events, how='left', on='event_id')
+data = data.merge(app_info, how='left', on='app_id')
+data = data.merge(label_categories, how='left', on='label_id')
+
+data.head(10)
+len(data)
+# save processed data
 labels.to_csv('./data/train_labels.csv', index=False)
 instances.to_csv('./data/train_instances.csv', index=False)
 with open('data/factorize_mappings.pkl', 'w') as f:
-    pkl.dump([mapping_gender, mapping_dev_id], f)
+    pkl.dump([mapping_gender], f)
 
 
 test = pd.read_csv("data/gender_age_test.csv")
