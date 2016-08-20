@@ -40,6 +40,11 @@ data_l = data_l.merge(app_events, how='left', on='event_id')
 data_l = data_l.merge(app_info, how='left', on='app_id')
 data_l = data_l.merge(label_categories, how='left', on='label_id')
 
+data_l.shape
+data_i.shape
+data_l.head()
+
+data_i.head()
 # join all the datasets to find their INTERSECTION
 data_i = pd.merge(instances, events, how='inner', on='device_id')
 data_i = data_i.merge(phone_info, how='inner', on='device_id')
