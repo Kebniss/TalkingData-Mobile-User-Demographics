@@ -8,11 +8,24 @@ labels = pd.DataFrame(demographic['group'])
 labels.columns = ['labels']
 instances = demographic.drop('group', axis=1)
 
+test = pd.read_csv("data/gender_age_test.csv")
+test.head()
+phone_info['device_model'].value_counts()
+
+
+
 phone_info = pd.read_csv("data/phone_brand_device_model.csv")
 app_info = pd.read_csv("data/app_labels.csv")
 app_events = pd.read_csv("data/app_events.csv")
 label_categories = pd.read_csv("data/label_categories.csv")
-events = pd.read_csv("data/events.csv")
+events = pd.read_csv("data/events.csv", parse_dates=['timestamp'],
+                     infer_datetime_format=True, dayfirst=True)
+
+events.head()['timestamp'].apply(lambda x: x.year if x else 0)
+
+label_categories
+
+
 
 # check if there are nan values in the datasets
 datasets = [instances, phone_info, events, app_info, app_events,
@@ -30,8 +43,21 @@ for i, dataset in enumerate(datasets):
             print 'Found NaN values: '
             print nulls
             nans[(names[i], col)] = nulls
-print nans
-len(label_cate)
+            dataset.drop(dataset.index[nulls.index], inplace=True)
+
+
+phone_info.pivot(index='device_id', columns='phone_brand', values='device_model')
+# check if there are multiple values for the keys used to merge the datasets
+instances['device_id'].value_counts().head()
+phone_info['device_id'].value_counts().head(550)
+phone_info.shape
+events['device_id'].value_counts().head()
+events['event_id'].value_counts().head()
+app_events['event_id'].value_counts().head()
+app_events['app_id'].value_counts().head()
+app_info['app_id'].value_counts().head()
+app_info['label_id'].value_counts().head()
+label_categories['label_id'].value_counts().head()
 
 # join LEFT all the datasets to create the raw training datasets
 data_l = pd.merge(instances, events, how='left', on='device_id')
@@ -40,19 +66,12 @@ data_l = data_l.merge(app_events, how='left', on='event_id')
 data_l = data_l.merge(app_info, how='left', on='app_id')
 data_l = data_l.merge(label_categories, how='left', on='label_id')
 
-data_l.shape
-data_i.shape
-data_l.head()
-
-data_i.head()
 # join all the datasets to find their INTERSECTION
 data_i = pd.merge(instances, events, how='inner', on='device_id')
 data_i = data_i.merge(phone_info, how='inner', on='device_id')
 data_i = data_i.merge(app_events, how='inner', on='event_id')
 data_i = data_i.merge(app_info, how='inner', on='app_id')
 data_i = data_i.merge(label_categories, how='inner', on='label_id')
-
-len(data_l) - len(data_i)
 
 # compare the two joins
 print "Amount of data when left joined: ", data_l.shape
