@@ -3,7 +3,8 @@ def rolling_stats_in_window(df,
                             aggs = ['mean', 'var'],
                             windows={'day':1, 'week':7, 'month':28, 'year':365},
                             ignore_columns = None):
-
+    import pandas as pd
+    
     df = df.sort_index()
     # Resample every 30 mins so that we can update after a game in the same
     # day
@@ -20,7 +21,6 @@ def rolling_stats_in_window(df,
     aggs_dict = {process_col: aggs for process_col in process_columns}
     aggs_dict[groupby_key] = "count"
 
-    import pandas as pd
     rolled_df = pd.DataFrame()
     for window_name, window_value in windows.items():
         win_df = (grouped_df

@@ -18,7 +18,6 @@ else:
             print 'Found NaN values: '
             print nulls
             nans[col] = nulls
-# create features
 
 #save
-data.to_csv("/Users/ludovicagonella/Documents/Projects/kaggle-talkingdata-mobile/TalkingData-Mobile-User-Demographics/data/processed/train_app_events.csv")
+data.to_csv("/Users/ludovicagonella/Documents/Projects/kaggle-talkingdata-mobile/TalkingData-Mobile-User-Demographics/data/processed/train_app_events.csv", index=False)
