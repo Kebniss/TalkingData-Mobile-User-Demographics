@@ -37,6 +37,9 @@ time_data = time_data.drop(['longitude','latitude'], 1)
 
 data = time_data.merge(app_data, on='event_id', how='left')
 
+duplicates = list(data.index.duplicated()).index(True)
+data.drop(data.index[duplicates], inplace=True)
+
 data.head()
 #save
 data.to_csv("/Users/ludovicagonella/Documents/Projects/kaggle-talkingdata-mobile/TalkingData-Mobile-User-Demographics/data/processed/train_app_events.csv", index=False)

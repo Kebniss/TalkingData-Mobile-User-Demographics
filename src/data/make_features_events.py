@@ -7,6 +7,7 @@ import numpy as np
 import pickle as pkl
 from datetime import timedelta
 from geopy.distance import great_circle
+from get_most_recent_event import get_most_recent_event
 from rolling_stats_in_window import rolling_stats_in_window
 
 os.getcwd()
@@ -89,20 +90,22 @@ joined['daily_distance'] = joined.apply(
          ), axis=1
         )
 
-joined.drop(['lon_yesterday', 'lat_yesterday',
-             'lon_today', 'lat_today'
+joined.drop(['lon_yesterday', 'lat_yesterday', 'event_id_yesterday',
+             'lon_today', 'lat_today', 'event_id_today'
              ],
             axis=1,
             inplace=True
             )
 
-joined = rolling_stats_in_window(joined.reset_index('device_id'),
+rolled = rolling_stats_in_window(joined,
                                groupby_key='device_id',
                                aggs = ['mean', 'var', 'max'],
-                               windows={'week':7, 'month':28, 'year':365}
+                               windows={'1day':1, '2days':2, '3days':3,
+                                        '7days':7, '10days':10}
                                )
 
+most_recent_data = get_most_recent_event(rolled.reset_index('device_id'), 'device_id', 'timestamp')
 #save
-path = os.getcwd() + '\data\processed\daily_distances.csv'
+path = os.getcwd() + '\data\processed\periodic_distances.csv'
 
-joined.to_csv(path)
+most_recent_data.to_csv(path)
