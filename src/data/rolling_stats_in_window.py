@@ -1,15 +1,17 @@
+import pandas as pd
+
 def rolling_stats_in_window(df,
                             groupby_key,
+                            col_to_roll,
                             aggs = ['mean', 'var', 'max'],
                             windows={'day':1, 'week':7, 'month':28, 'year':365},
                             ignore_columns = None):
-    import pandas as pd
 
     if not ignore_columns:
-        ignore_columns = set([])
+        ignore_columns = []
     else:
-        ignore_columns = set(ignore_columns)
-    ignore_columns.add(groupby_key)
+        ignore_columns = [ignore_columns]
+    ignore_columns.append(groupby_key)
 
     process_columns = [col for col in df.columns if col not in ignore_columns]
 
@@ -21,7 +23,7 @@ def rolling_stats_in_window(df,
         # MEAN
         win_df_mean = (df.reset_index('device_id').groupby('device_id')
                         .rolling(window_value, min_periods=1)
-                        .agg({'daily_distance':'mean'})
+                        .agg({col_to_roll: 'mean'})
                         )
         win_df_mean.columns = [win_df_mean.columns.values + "_" + window_name + '_mean']
         win_df_mean = win_df_mean.rename(
@@ -32,7 +34,7 @@ def rolling_stats_in_window(df,
         # VAR
         win_df_var = (df.reset_index('device_id').groupby('device_id')
                         .rolling(window_value, min_periods=1)
-                        .agg({'daily_distance':'var'})
+                        .agg({col_to_roll: 'var'})
                         )
         win_df_var.columns = [win_df_var.columns.values + "_" + window_name + '_var']
         win_df_var = win_df_var.rename(
@@ -43,7 +45,7 @@ def rolling_stats_in_window(df,
         # MAX
         win_df_max = (df.reset_index('device_id').groupby('device_id')
                         .rolling(window_value, min_periods=1)
-                        .agg({'daily_distance':'max'})
+                        .agg({col_to_roll: 'max'})
                         )
         win_df_max.columns = [win_df_max.columns.values + "_" + window_name + '_max']
         win_df_max = win_df_max.rename(
@@ -54,7 +56,7 @@ def rolling_stats_in_window(df,
         # COUNT
         win_df_count = (df.reset_index('device_id').groupby('device_id')
                         .rolling(window_value, min_periods=1)
-                        .agg({'daily_distance':'count'})
+                        .agg({col_to_roll: 'count'})
                         )
         win_df_count.columns = [win_df_count.columns.values + "_" + window_name + '_count']
         win_df_count = win_df_count.rename(

@@ -1,24 +1,25 @@
-""" This script loads the raw app_labels dataset, creates the
+""" This script loads the raw app_categories dataset, creates the
     features and deals with NaN values."""
 
+import os
 import pandas as pd
-import pickle as pkl
-import os.path
+import numpy as np
+from drop_nans import drop_nans
 
-data = pd.read_csv("/Users/ludovicagonella/Documents/Projects/kaggle-talkingdata-mobile/TalkingData-Mobile-User-Demographics/data/raw/app_labels.csv")
+os.getcwd()
+os.chdir('..')
+os.chdir('..')
 
-# find nans
-nans = {}
-cols = data.columns
-for _, col in enumerate(cols):
-        nulls = data[data[col].isnull()]
-        if nulls.empty:
-            print 'No NaNs found.'
-else:
-            print 'Found NaN values: '
-            print nulls
-            nans[col] = nulls
-# create features
+path = os.getcwd() + '\data\\raw\\app_labels.csv'
+app_category = pd.read_csv(path)
 
-#save
-data.to_csv("/Users/ludovicagonella/Documents/Projects/kaggle-talkingdata-mobile/TalkingData-Mobile-User-Demographics/data/processed/train_app_labels.csv")
+app_category = drop_nans(app_category)
+app_category = (app_category
+                .sort_values(by='app_id')
+                .groupby('app_id', as_index=False)['label_id']
+                .agg({ 'apps_category_list':( lambda x: list(x) ) })
+                )
+type(app_category.apps_category_list[0])
+
+path = os.getcwd() + '\data\\processed\\app_labels_list.csv'
+app_category.to_csv(path)
