@@ -1,5 +1,5 @@
 import pandas as pd
-from count_list_and_int import count_list_and_int
+from operations_on_list import count_list_and_int
 from collections import Counter
 
 def rolling_most_freq_in_window(df,
@@ -8,13 +8,10 @@ def rolling_most_freq_in_window(df,
                                 windows=[2, 3, 7, 10]
                                 ):
 
-    col_to_roll = 'active_apps_cat'
-    df = daily_active_cat[['device_id','active_apps_cat']]
-    groupby_key = 'device_id'
-    windows=[2, 3, 7, 10]
     df[groupby_key], map_id = pd.factorize(df.device_id)
+    map_id_apps = None
     if 'most_freq_app_dly' in df:
-        df['most_freq_app_dly'], map_id = pd.factorize(df.most_freq_app_dly)
+        df['most_freq_app_dly'], map_id_apps = pd.factorize(df.most_freq_app_dly)
 
     df = df.reset_index(groupby_key).groupby(groupby_key, as_index=False)
 
@@ -42,26 +39,20 @@ def rolling_most_freq_in_window(df,
     def flatten_list(l):
         #res = [item for sublist in l for item in sublist if isinstance(item, (int, long)) item = list(item)]
         res = []
-        for sublist in l:
-            if isinstance(sublist, (int, long)):
-                sublist = list(sublist)
-            for item in sublist:
-                if not res:
-                    res = [item]
-                else:
-                    res.append(item)
+        l = [sublist if isinstance(sublist, list) else [sublist]
+             for sublist in l]
+        res = [item for sublist in l for item in sublist]
+
         return res
 
-    key = 0
-    group = df.get_group(key)
     aggr_2d = pd.DataFrame()
     for key, group in df:
-        arr = [group[col_to_roll].shift(x).values[::-1][:2] for x in range(len(group))[::-1]]
+        arr = ( [ group[col_to_roll].shift(x).values[::-1][:2]
+                  for x in range(len(group))[::-1] ] )
         most_recent = arr[-1]
         most_recent = flatten_list(most_recent)
         most_used = Counter(most_recent).most_common()[0][0]
         time = group.timestamp.max()
-        most_used = inverse_map(most_used, map_id)
         aggr_2d = aggr_2d.append([[key, time, most_used]])
 
     aggr_2d.columns=[groupby_key, 'timestamp', '2days_most_used']
@@ -72,7 +63,6 @@ def rolling_most_freq_in_window(df,
         most_recent = arr[-1]
         most_recent = flatten_list(most_recent)
         most_used = Counter(most_recent).most_common()[0][0]
-        most_used = inverse_map(most_used, map_id)
         time = group.timestamp.max()
         aggr_3d = aggr_3d.append([[key, time, most_used]])
 
@@ -84,7 +74,6 @@ def rolling_most_freq_in_window(df,
         most_recent = arr[-1]
         most_recent = flatten_list(most_recent)
         most_used = Counter(most_recent).most_common()[0][0]
-        most_used = inverse_map(most_used, map_id)
         time = group.timestamp.max()
         aggr_7d = aggr_7d.append([[key, time, most_used]])
 
@@ -96,11 +85,8 @@ def rolling_most_freq_in_window(df,
         most_recent = arr[-1]
         most_recent = flatten_list(most_recent)
         most_used = Counter(most_recent).most_common()[0][0]
-        most_used = inverse_map(most_used, map_id)
         time = group.timestamp.max()
         aggr_10d = aggr_10d.append([[key, time, most_used]])
-
-
 
     aggr_10d.columns=[groupby_key, 'timestamp', '10days_most_used']
 
@@ -114,9 +100,21 @@ def rolling_most_freq_in_window(df,
                            on=groupby_key,
                            how='left')
 
+    if map_id_apps:
+        rolled_df['2days_most_used'] = inverse_map(
+                                                rolled_df['2days_most_used'],
+                                                map_id_apps)
+        rolled_df['3days_most_used'] = inverse_map(
+                                                rolled_df['3days_most_used'],
+                                                map_id_apps)
+        rolled_df['7days_most_used'] = inverse_map(
+                                                rolled_df['7days_most_used'],
+                                                map_id_apps)
+        rolled_df['10days_most_used'] = inverse_map(
+                                                rolled_df['10days_most_used'],
+                                                map_id_apps)
+
     rolled_df[groupby_key] = rolled_df[groupby_key].apply(lambda x:
                                                           inverse_map(x,
-                                                                      map_dev_id))
-
-
+                                                                      map_id))
     return rolled_df
