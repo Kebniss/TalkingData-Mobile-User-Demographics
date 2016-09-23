@@ -114,12 +114,10 @@ rld_most_installed_cat = rolling_most_freq_in_window(
                                             windows=[2, 3, 7, 10]
                                             )
 
-installed_cat_feat = rld_most_installed_cat.merge(daily_installed_cat[
-                                                                ['1st_cat_dly',
-                                                                 '2nd_cat_dly',
-                                                                 '3rd_cat_dly',
-                                                                 'device_id']],
-                                                  on='device_id',
+installed_cat_feat = rld_most_installed_cat.merge(daily_installed_cat
+                                                  .drop('active_apps_cat')
+                                                  .reset_index(),
+                                                  on=['device_id', 'timestamp'],
                                                   how='inner'
                                                   )
 
@@ -132,11 +130,10 @@ rld_most_active_cat = rolling_most_freq_in_window(
                                                 windows=[2, 3, 7, 10]
                                                 )
 
-active_cat_feat = rld_most_active_cat.merge(daily_active_cat[['1st_cat_dly',
-                                                              '2nd_cat_dly',
-                                                              '3rd_cat_dly',
-                                                              'device_id']],
-                                            on='device_id',
+active_cat_feat = rld_most_active_cat.merge(daily_active_cat
+                                            .drop('active_apps_cat')
+                                            .reset_index(),
+                                            on=['device_id', 'timestamp'],
                                             how='inner'
                                             )
 
