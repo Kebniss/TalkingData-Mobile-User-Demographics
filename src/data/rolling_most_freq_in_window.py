@@ -8,31 +8,14 @@ def rolling_most_freq_in_window(df,
                                 windows=[2, 3, 7, 10]
                                 ):
 
-    df[groupby_key], map_id = pd.factorize(df.device_id)
+    df = df.reset_index()
+    df[groupby_key], map_id = pd.factorize(df[groupby_key])
     map_id_apps = None
     if 'most_freq_app_dly' in df:
-        df['most_freq_app_dly'], map_id_apps = pd.factorize(df.most_freq_app_dly)
+        df['most_freq_app_dly'], map_id_apps = pd.factorize(df['most_freq_app_dly'])
 
-    df = df.reset_index(groupby_key).groupby(groupby_key, as_index=False)
+    df = df.groupby(groupby_key, as_index=False)
 
-    # aggr = pd.DataFrame()
-    # tmp = pd.DataFrame()
-    # windows = [2, 3, 7, 10]
-    # for i in windows:
-    #     for key, group in df:
-    #         arr = [group.most_freq_app_dly.shift(x).values[::-1][:i] for x in range(len(group))[::-1]]
-    #         most_recent = arr[-1]
-    #         most_used = Counter(most_recent).most_common()[0][0]
-    #         time = group['timestamp'].max()
-    #         if i == 2:
-    #             tmp = tmp.append([[key, time, most_used]], ignore_index=True)
-    #         else:
-    #             tmp = tmp.append([[most_used]], ignore_index=True)
-    #     if i ==2:
-    #         aggr = tmp
-    #         aggr.columns = [groupby_key, 'timestamp', '2days_most_used_app']
-    #     else:
-    #         aggr[str(i) + 'days_most_used_app'] = tmp
     def inverse_map(elem, map_array):
             return map_array[elem]
 
@@ -90,6 +73,8 @@ def rolling_most_freq_in_window(df,
 
     aggr_10d.columns=[groupby_key, 'timestamp', '10days_most_used']
 
+    tmp = rolled_df
+
     rolled_df = aggr_2d.merge(aggr_3d.drop('timestamp',1),
                               on=groupby_key,
                               how='left')
@@ -100,7 +85,7 @@ def rolling_most_freq_in_window(df,
                            on=groupby_key,
                            how='left')
 
-    if map_id_apps:
+    if map_id_apps is not None:
         rolled_df['2days_most_used'] = inverse_map(
                                                 rolled_df['2days_most_used'],
                                                 map_id_apps)

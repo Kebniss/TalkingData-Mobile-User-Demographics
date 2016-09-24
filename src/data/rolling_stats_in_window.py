@@ -7,6 +7,12 @@ def rolling_stats_in_window(df,
                             windows={'day':1, 'week':7, 'month':28, 'year':365},
                             ignore_columns = None):
 
+    df = daily_installed
+    groupby_key = 'device_id'
+    col_to_roll = 'n_app_installed_daily'
+     windows={'day':1, '2days':2,
+              '3days':28, '7days':7,
+              '10days':10}
     if not ignore_columns:
         ignore_columns = []
     else:
@@ -21,7 +27,7 @@ def rolling_stats_in_window(df,
     rolled_df = pd.DataFrame()
     for window_name, window_value in windows.items():
         # MEAN
-        win_df_mean = (df.reset_index('device_id').groupby('device_id')
+        win_df_mean = (df.reset_index(groupby_key).groupby(groupby_key)
                         .rolling(window_value, min_periods=1)
                         .agg({col_to_roll: 'mean'})
                         )
@@ -32,7 +38,7 @@ def rolling_stats_in_window(df,
                        })
 
         # VAR
-        win_df_var = (df.reset_index('device_id').groupby('device_id')
+        win_df_var = (df.reset_index(groupby_key).groupby(groupby_key)
                         .rolling(window_value, min_periods=1)
                         .agg({col_to_roll: 'var'})
                         )
@@ -43,7 +49,7 @@ def rolling_stats_in_window(df,
                        })
 
         # MAX
-        win_df_max = (df.reset_index('device_id').groupby('device_id')
+        win_df_max = (df.reset_index(groupby_key).groupby(groupby_key)
                         .rolling(window_value, min_periods=1)
                         .agg({col_to_roll: 'max'})
                         )
@@ -54,7 +60,7 @@ def rolling_stats_in_window(df,
                        })
 
         # COUNT
-        win_df_count = (df.reset_index('device_id').groupby('device_id')
+        win_df_count = (df.reset_index(groupby_key).groupby(groupby_key)
                         .rolling(window_value, min_periods=1)
                         .agg({col_to_roll: 'count'})
                         )

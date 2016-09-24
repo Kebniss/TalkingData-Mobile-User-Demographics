@@ -23,13 +23,9 @@ time_data = pd.read_csv(path,
 path = os.getcwd() + '\data\\raw\\app_events.csv'
 app_data = pd.read_csv(path)
 
-path = os.getcwd() + '\data\\processed\\app_labels_list.csv'
-app_category = pd.read_csv(path)
-
 # find nans
 time_data = drop_nans(time_data)
 app_data = drop_nans(app_data)
-app_category = drop_nans(app_category)
 
 time_data = time_data.drop(['longitude','latitude'], 1)
 
@@ -83,8 +79,8 @@ daily_active = (data_active
 daily_active['n_app_active_daily'] = count_list_and_int(daily_active['active_apps'])
 daily_active['most_freq_app_dly'] = most_common_in_list(daily_active['active_apps'], 1)
 
-daily_installed = daily_installed.drop('installed_apps', 1).reset_index('device_id')
-daily_active = daily_active.drop('active_apps', 1).reset_index('device_id')
+daily_installed = daily_installed.drop('installed_apps', 1)
+daily_active = daily_active.drop('active_apps', 1)
 
 # create time windows
 rld_dly_installed = rolling_stats_in_window(daily_installed,
@@ -104,6 +100,7 @@ rld_dly_active = rolling_stats_in_window(daily_active,
 
 rld_most_active = rolling_most_freq_in_window(daily_active,
                                               groupby_key='device_id',
+                                              col_to_roll='most_freq_app_dly',
                                               windows=[2, 3, 7, 10])
 rld_most_active = rld_most_active.drop('timestamp',1)
 

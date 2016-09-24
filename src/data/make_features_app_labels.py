@@ -6,7 +6,6 @@ import pandas as pd
 import numpy as np
 from drop_nans import drop_nans
 from operations_on_list import *
-from get_most_recent_event import get_most_recent_event
 from rolling_most_freq_in_window import rolling_most_freq_in_window
 
 os.getcwd()
@@ -105,7 +104,6 @@ daily_active_cat['2nd_cat_dly'] = most_common_in_list(
 daily_active_cat['3rd_cat_dly'] = most_common_in_list(
                                         daily_active_cat['active_apps_cat'],3)
 
-daily_installed_cat = daily_installed_cat.reset_index('device_id')
 rld_most_installed_cat = rolling_most_freq_in_window(
                                             daily_installed_cat[['device_id',
                                                          'installed_apps_cat']],
@@ -121,7 +119,6 @@ installed_cat_feat = rld_most_installed_cat.merge(daily_installed_cat
                                                   how='inner'
                                                   )
 
-daily_active_cat = daily_active_cat.reset_index('device_id')
 rld_most_active_cat = rolling_most_freq_in_window(
                                                 daily_active_cat[['device_id',
                                                             'active_apps_cat']],
