@@ -9,10 +9,6 @@ def rolling_most_freq_in_window(df,
                                 windows=[2, 3, 7, 10]
                                 ):
 
-    # df = daily_active
-    # groupby_key='device_id'
-    # col_to_roll='most_freq_app_dly'
-    # windows=[2, 3, 7, 10]
     df = df.reset_index()
     df[groupby_key], map_id = pd.factorize(df[groupby_key])
     map_id_apps = None

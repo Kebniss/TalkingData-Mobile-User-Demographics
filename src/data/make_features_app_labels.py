@@ -2,8 +2,9 @@
     features and deals with NaN values."""
 
 import os
-import pandas as pd
 import numpy as np
+import pandas as pd
+from scripts import *
 from drop_nans import drop_nans
 from operations_on_list import *
 from get_most_recent_event import get_most_recent_event
@@ -50,10 +51,6 @@ active_apps_cat = (active_apps_cat
                    .groupby('event_id', as_index=False)['apps_category_list']
                    .agg({ 'active_apps_cat':( lambda x: list(x) ) })
                    )
-
-def flatten_list(l):
-    res = [item for sublist in l for item in sublist]
-    return res
 
 data_installed_cat = time_data.merge(installed_apps_cat,
                                      on='event_id',
@@ -111,8 +108,10 @@ rld_most_installed_cat = rolling_most_freq_in_window(
                                         windows=[2, 3, 7, 10]
                                         )
 
-recent_dly_instll_cat = get_most_recent_event(daily_installed_cat, groupby_key='device_id')
-recent_dly_actv_cat = get_most_recent_event(daily_active_cat, groupby_key='device_id')
+recent_dly_instll_cat = get_most_recent_event(daily_installed_cat,
+                                              groupby_key='device_id')
+recent_dly_actv_cat = get_most_recent_event(daily_active_cat,
+                                            groupby_key='device_id')
 
 installed_cat_feat = rld_most_installed_cat.merge(recent_dly_instll_cat
                                                   .drop('installed_apps_cat', 1)
