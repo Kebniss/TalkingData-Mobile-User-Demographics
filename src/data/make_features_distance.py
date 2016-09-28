@@ -2,13 +2,16 @@
     features and deals with NaN values."""
 
 import os
-import pandas as pd
 import numpy as np
-import pickle as pkl
+import pandas as pd
+from scripts import *
 from datetime import timedelta
+from operations_on_list import *
+from drop_nans import drop_nans
 from geopy.distance import great_circle
 from get_most_recent_event import get_most_recent_event
 from rolling_stats_in_window import rolling_stats_in_window
+
 
 os.getcwd()
 os.chdir('..')
@@ -20,17 +23,8 @@ data = pd.read_csv(path,
 data.columns = ['event_id', 'device_id', 'timestamp', 'lon', 'lat']
 
 # find and remove nans
-nans = {}
-cols = data.columns
-for _, col in enumerate(cols):
-        nulls = data[data[col].isnull()]
-        if nulls.empty:
-            print 'No NaNs found.'
-        else:
-            print 'Found NaN values: '
-            print nulls
-            nans[col] = nulls
-            data.drop(nulls, inplace=True)
+data = drop_nans(data)
+data=data.head(1000)
 
 # remove those instances that are located:
 # - in the ocean around the equator (lat~0)
@@ -63,7 +57,8 @@ daily_data = (data
               .drop('device_id', 1) # so fills them with prev day's position
               )
 
-daily_data_grouped = (daily_data.reset_index()
+daily_data_grouped = (daily_data
+                      .reset_index()
                       .set_index(['timestamp'])
                       .groupby('device_id', sort=True)
                       )
@@ -99,13 +94,16 @@ joined.drop(['lon_yesterday', 'lat_yesterday', 'event_id_yesterday',
 
 rolled = rolling_stats_in_window(joined,
                                groupby_key='device_id',
+                               col_to_roll='daily_distance',
                                aggs = ['mean', 'var', 'max'],
                                windows={'1day':1, '2days':2, '3days':3,
                                         '7days':7, '10days':10}
                                )
 
-most_recent_data = get_most_recent_event(rolled.reset_index('device_id'), 'device_id', 'timestamp')
-#save
-path = os.getcwd() + '\data\processed\periodic_distances.csv'
+most_recent_data = get_most_recent_event(rolled, 'device_id', 'timestamp')
+for c in most_recent_data.columns:
+    most_recent_data[c] = fillnan(most_recent_data[c])
 
+#save
+path = os.getcwd() + '\data\processed\distances.csv'
 most_recent_data.to_csv(path)
