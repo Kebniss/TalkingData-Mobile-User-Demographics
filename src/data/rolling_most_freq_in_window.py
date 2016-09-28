@@ -1,6 +1,7 @@
 import pandas as pd
-from operations_on_list import count_list_and_int
+from scripts import *
 from collections import Counter
+from operations_on_list import count_list_and_int
 
 def rolling_most_freq_in_window(df,
                                 groupby_key,
@@ -8,6 +9,10 @@ def rolling_most_freq_in_window(df,
                                 windows=[2, 3, 7, 10]
                                 ):
 
+    # df = daily_active
+    # groupby_key='device_id'
+    # col_to_roll='most_freq_app_dly'
+    # windows=[2, 3, 7, 10]
     df = df.reset_index()
     df[groupby_key], map_id = pd.factorize(df[groupby_key])
     map_id_apps = None
@@ -16,18 +21,6 @@ def rolling_most_freq_in_window(df,
 
     df = df.groupby(groupby_key, as_index=False)
 
-    def inverse_map(elem, map_array):
-            return map_array[elem]
-
-    def flatten_list(l):
-        #res = [item for sublist in l for item in sublist if isinstance(item, (int, long)) item = list(item)]
-        res = []
-        l = [sublist if isinstance(sublist, list) else [sublist]
-             for sublist in l]
-        res = [item for sublist in l for item in sublist]
-
-        return res
-
     aggr_2d = pd.DataFrame()
     for key, group in df:
         arr = ( [ group[col_to_roll].shift(x).values[::-1][:2]
@@ -35,7 +28,7 @@ def rolling_most_freq_in_window(df,
         most_recent = arr[-1]
         most_recent = flatten_list(most_recent)
         most_used = Counter(most_recent).most_common()[0][0]
-        time = group.timestamp.max()
+        time = group['timestamp'].max()
         aggr_2d = aggr_2d.append([[key, time, most_used]])
 
     aggr_2d.columns=[groupby_key, 'timestamp', '2days_most_used']
@@ -46,7 +39,7 @@ def rolling_most_freq_in_window(df,
         most_recent = arr[-1]
         most_recent = flatten_list(most_recent)
         most_used = Counter(most_recent).most_common()[0][0]
-        time = group.timestamp.max()
+        time = group['timestamp'].max()
         aggr_3d = aggr_3d.append([[key, time, most_used]])
 
     aggr_3d.columns=[groupby_key, 'timestamp', '3days_most_used']
@@ -57,7 +50,7 @@ def rolling_most_freq_in_window(df,
         most_recent = arr[-1]
         most_recent = flatten_list(most_recent)
         most_used = Counter(most_recent).most_common()[0][0]
-        time = group.timestamp.max()
+        time = group['timestamp'].max()
         aggr_7d = aggr_7d.append([[key, time, most_used]])
 
     aggr_7d.columns=[groupby_key, 'timestamp', '7days_most_used']
@@ -68,12 +61,11 @@ def rolling_most_freq_in_window(df,
         most_recent = arr[-1]
         most_recent = flatten_list(most_recent)
         most_used = Counter(most_recent).most_common()[0][0]
-        time = group.timestamp.max()
+        time = group['timestamp'].max()
         aggr_10d = aggr_10d.append([[key, time, most_used]])
 
     aggr_10d.columns=[groupby_key, 'timestamp', '10days_most_used']
 
-    tmp = rolled_df
 
     rolled_df = aggr_2d.merge(aggr_3d.drop('timestamp',1),
                               on=groupby_key,

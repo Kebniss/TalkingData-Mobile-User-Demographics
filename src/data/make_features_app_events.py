@@ -2,9 +2,9 @@
     features and deals with NaN values."""
 
 import os
-import pandas as pd
 import numpy as np
-import pickle as pkl
+import pandas as pd
+from scripts import *
 from datetime import timedelta
 from drop_nans import drop_nans
 from operations_on_list import *
@@ -13,8 +13,8 @@ from rolling_stats_in_window import rolling_stats_in_window
 from rolling_most_freq_in_window import rolling_most_freq_in_window
 
 os.getcwd()
-os.chdir('..')
-os.chdir('..')
+os.chdir('..\..')
+
 path = os.getcwd() + '\data\\raw\events.csv'
 time_data = pd.read_csv(path,
                         parse_dates=['timestamp'],
@@ -76,8 +76,11 @@ daily_active = (data_active
                    .to_frame() # convert series to dataframe
                 )
 
-daily_active['n_app_active_daily'] = count_list_and_int(daily_active['active_apps'])
-daily_active['most_freq_app_dly'] = most_common_in_list(daily_active['active_apps'], 1)
+daily_active['n_app_active_daily'] = count_list_and_int(
+                                                    daily_active['active_apps'])
+daily_active['1st_app_dly'] = most_common_in_list(daily_active['active_apps'],1)
+daily_active['2nd_app_dly'] = most_common_in_list(daily_active['active_apps'],2)
+daily_active['3rd_app_dly'] = most_common_in_list(daily_active['active_apps'],3)
 
 daily_installed = daily_installed.drop('installed_apps', 1)
 daily_active = daily_active.drop('active_apps', 1)
@@ -92,26 +95,54 @@ rld_dly_installed = rolling_stats_in_window(daily_installed,
 
 rld_dly_active = rolling_stats_in_window(daily_active,
                                          groupby_key='device_id',
-                                         ignore_columns='most_freq_app_dly',
+                                         ignore_columns=['1st_app_dly',
+                                                         '2nd_app_dly',
+                                                         '3rd_app_dly'],
                                          col_to_roll='n_app_active_daily',
                                          windows={'day':1, '2days':2,
                                                   '3days':28, '7days':7,
-                                                  '10days':10})
+                                                  '10days':10}
+                                         )
 
 rld_most_active = rolling_most_freq_in_window(daily_active,
                                               groupby_key='device_id',
-                                              col_to_roll='most_freq_app_dly',
-                                              windows=[2, 3, 7, 10])
-rld_most_active = rld_most_active.drop('timestamp',1)
+                                              col_to_roll='1st_app_dly',
+                                              windows=[2, 3, 7, 10]
+                                              )
 
-rld_active = rld_daily_active.merge(rld_most_active, on='device_id', how='inner')
+ rld_most_active = rld_most_active.set_index(['device_id', 'timestamp'])
 
-path = os.getcwd() + '\src\\data\\rld_active.csv'
-rld_active.to_csv(path,index=False)
-rld_dly_active = pd.read_csv(path)
-rld_dly_active = rld_dly_active.drop('Unnamed: 1', 1)
+daily_active_1d_log.fillna(value={'nan': -1}, axis=0)
 
-path = os.getcwd() + '\src\\data\\rld_dly_installed.csv'
-rld_dly_installed.to_csv(path)
+daily_installed_1d_log = get_most_recent_event(daily_installed, groupby_key='device_id', timestamp='timestamp')
+daily_active_1d_log = get_most_recent_event(daily_active, groupby_key='device_id', timestamp='timestamp')
+rld_dly_installed_1d_log = get_most_recent_event(rld_dly_installed, groupby_key='device_id', timestamp='timestamp')
+rld_dly_active_1d_log = get_most_recent_event(rld_dly_active, groupby_key='device_id', timestamp='timestamp')
+
+for c in daily_active_1d_log.columns:
+    daily_active_1d_log[c] = fillnan(daily_active_1d_log[c])
+for c in daily_installed_1d_log.columns:
+    daily_installed_1d_log[c] = fillnan(daily_installed_1d_log[c])
+for c in rld_dly_installed_1d_log.columns:
+    rld_dly_installed_1d_log[c] = fillnan(rld_dly_installed_1d_log[c])
+for c in rld_dly_active_1d_log.columns:
+    rld_dly_active_1d_log[c] = fillnan(rld_dly_active_1d_log[c])
+for c in rld_most_active.columns:
+    rld_most_active[c] = fillnan(rld_most_active[c])
+
+active_apps_feat = daily_active_1d_log.join(rld_most_active, how='inner')
+active_apps_feat = active_apps_feat.join(rld_dly_active_1d_log, how='inner')
+active_apps_feat = active_apps_feat.drop('n_app_active_daily_day_var', 1)
+
+installed_apps_feat = daily_installed_1d_log.join(rld_dly_installed_1d_log,
+                                                  how='inner')
+
+app_feat = active_apps_feat.join(installed_apps_feat,
+                                 how='inner',
+                                 lsuffix='_active',
+                                 rsuffix='_installed'
+                                 )
+
+path = os.getcwd() + '\data\processed\\app_id_features.csv'
 #save
-data.to_csv("/Users/ludovicagonella/Documents/Projects/kaggle-talkingdata-mobile/TalkingData-Mobile-User-Demographics/data/processed/train_app_events.csv", index=False)
+app_feat.to_csv(path)

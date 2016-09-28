@@ -1,8 +1,12 @@
+import os.path
 import pandas as pd
 import pickle as pkl
 
-data = pd.read_csv("/Users/ludovicagonella/Documents/Projects/kaggle-talkingdata-mobile/TalkingData-Mobile-User-Demographics/data/raw/Mod_phone_brand_device_model.csv")
+path = os.getcwd() + '/data/processed/Mod_phone_brand_device_model.csv'
+data = pd.read_csv(path)
 
 specs_table = data.drop_duplicates(['phone_brand', 'device_model'])
+specs_table = specs_table.drop('device_id', 1)
 
-specs_table.to_csv("/Users/ludovicagonella/Documents/Projects/kaggle-talkingdata-mobile/TalkingData-Mobile-User-Demographics/data/raw/specs_table.csv")
+path = os.getcwd() + '/data/processed/specs_table.csv'
+specs_table.to_csv(path, index=False)
