@@ -1,14 +1,16 @@
 
-def count_list_and_int(input_series):
+def count_list_and_int(input_series, max_value=None):
     """ This functions counts the elements in each element contained in a series of
         lists. If the element is an integer then the count is set to 0"""
+    if max_value is None:
+        max_value = float("inf")
 
     res = [0]*len(input_series)
     for i, lst in enumerate(input_series): #data_active
         if isinstance(lst, (int, long)):
             res[i] = 0
         else:
-            res[i] = len(lst)
+            res[i] = len(lst) if len(lst) < max_value else max_value
 
     return res
 
