@@ -28,11 +28,11 @@ specs = pd.read_csv(path.join(FEATURES_DATA_DIR, 'specs_features.csv'))
 specs['device_id'] = specs['device_id'].astype(str)
 
 app_specs = app_features.merge(specs, on='device_id', how='inner')
+app_specs['phone_brand'], map_brand = pd.factorize(app_specs['phone_brand'])
+pd.DataFrame(map_brand).to_csv(path.join(FEATURES_DATA_DIR, 'map_brand,csv'))
 
 ignore_columns = ['phone_brand', 'device_model']
-
 final_features = fillnan(app_specs, ignore_columns=ignore_columns)
 final_features.info()
-
-path = os.getcwd() + '\data\processed\\final_features.csv'
+a=1
 final_features.to_csv(path.join(FEATURES_DATA_DIR, 'final_features.csv'), index=False)

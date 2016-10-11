@@ -4,6 +4,7 @@ import pandas as pd
 from os import path
 import xgboost as xgb
 import seaborn as sns
+from time import time
 import matplotlib.pyplot as plt
 from sklearn.metrics import log_loss
 from dotenv import load_dotenv, find_dotenv
@@ -31,6 +32,7 @@ train_data = pd.read_csv(path.join(FEATURES_DATA_DIR, 'train_dataset.csv'))
 labels = train_data['group']
 data = train_data.drop('group', 1)
 data['phone_brand'], map_brand = pd.factorize(data['phone_brand'])
+data = data.drop(['device_model', 'device_id'], 1)
 
 # ------ DATA EXPLORATION ------
 # ignore id and string columns because their values don't come from a distribution
@@ -61,12 +63,9 @@ f = class_frequency(labels)
 
 X, X_dev, y, y_dev = train_test_split(data,
                                       labels,
-                                      test_size=0.30,
-                                      random_state=0)
-X_1, X_2, y_1, y_2 = train_test_split(X_dev,
-                                      y_dev,
-                                      test_size=0.50,
-                                      random_state=0)
+                                      test_size=0.20,
+                                      random_state=None)
+
 
 gbm = xgb.XGBClassifier(n_estimators=200, learning_rate=0.05, nthread=4)
 parameters = {'max_depth': (3, 5, 6, 7, 8, 9, 11)}
@@ -77,19 +76,22 @@ clf = RandomizedSearchCV(gbm,
                          n_iter=20,
                          random_state=42,
                          scoring=f1_scorer)
+t0 = time()
 gbm.fit(X.as_matrix(), y.as_matrix())
+t1 = time()
+(t1-t0)/60
 
-y_pred = gbm.predict(X_1.as_matrix())
+#y_pred = gbm.predict(X.as_matrix())
 
 sig_clf = CalibratedClassifierCV(gbm, method='sigmoid', cv='prefit' )
-sig_clf.fit(X_1, y_1)
-sig_cdlf_probs = sig_clf.predict_proba(X_2)
-sig_score = log_loss(y_2, sig_cdlf_probs)
+sig_clf.fit(X_dev, y_dev)
+#sig_cdlf_probs = sig_clf.predict_proba(X_2)
+#sig_score = log_loss(y_2, sig_cdlf_probs)
 
 import pickle
-with open(path.join(MODELS_DIR, 'gbm_12c_3d_300est.csv'), 'w') as f:
+with open(path.join(MODELS_DIR, 'gbm_12c_3d_300est.pkl'), 'wb') as f:
     pickle.dump(gbm, f)
-with open(path.join(MODELS_DIR, 'gbm_12c_3d_300est_clb.csv'), 'w') as f:
+with open(path.join(MODELS_DIR, 'gbm_12c_3d_300est_clb.pkl'), 'wb') as f:
     pickle.dump(sig_clf, f)
 
 importances = gbm.feature_importances_
