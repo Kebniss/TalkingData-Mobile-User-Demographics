@@ -2,7 +2,6 @@ import os
 import numpy as np
 import pandas as pd
 from os import path
-from scripts import fillnan
 from dotenv import load_dotenv, find_dotenv
 
 dotenv_path = find_dotenv()
@@ -18,8 +17,9 @@ features['device_id'] = features['device_id'].astype(str)
 train_ids = pd.read_csv(path.join(RAW_DATA_DIR, 'gender_age_train.csv'))
 train_ids['device_id'] = train_ids['device_id'].astype(str)
 
-train_data = train_ids.merge(features, on='device_id', how='inner')
+train_data = train_ids.merge(features, on='device_id', how='left')
 train_data.shape
+train_data = train_data.fillna(-1)
 
 train_data = train_data.drop(['gender', 'age'], 1)
 train_data.to_csv(path.join(FEATURES_DATA_DIR, 'train_dataset.csv'), index=False)
