@@ -25,10 +25,9 @@ FEATURES_DATA_DIR = os.environ.get("FEATURES_DIR")
 VISUALIZATION_DIR = os.environ.get("VISUALIZATION_DIR")
 MODELS_DIR = os.environ.get("MODELS_DIR")
 
-data = pd.read_csv(os.path.join(FEATURES_DATA_DIR,'train_dataset.csv'),
-                      index_col='device_id')
+data = pd.read_csv(os.path.join(FEATURES_DATA_DIR,'train_dataset.csv'))
 labels = data['group']
-data = data.drop(['group', 'device_model'], 1)
+data = data.drop(['group', 'device_model', 'device_id'], 1)
 
 targetencoder = LabelEncoder().fit(labels)
 labels = targetencoder.transform(labels)
@@ -45,15 +44,15 @@ classfier = LogisticRegression(C=0.01)
 #                    scoring=logl_scorer)
 clf = classfier
 clf.fit(X,y)
-
 pred = clf.predict_proba(X_dev)
 
 res = log_loss(y_dev, pred)
 import pickle
-with open(MODELS_DIR, 'mine_feat_log_reg_001c_encoded_label.pkl'):
+with open(path.join(MODELS_DIR, 'mine_feat_log_reg_001c_encoded_label.pkl'), 'wb') as f:
     pickle.dump(clf, f)
 
 data = pd.read_csv(path.join(FEATURES_DATA_DIR, 'test_dataset.csv'))
+data.shape
 dev_id = data['device_id']
 data = data.drop(['device_model', 'device_id'], 1)
 pred = clf.predict_proba(data)

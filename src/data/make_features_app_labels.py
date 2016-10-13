@@ -12,6 +12,7 @@ from drop_nans import drop_nans
 from operations_on_list import *
 from matplotlib import pyplot as plt
 from dotenv import load_dotenv, find_dotenv
+from sklearn.preprocessing import LabelEncoder
 from get_most_recent_event import get_most_recent_event
 from rolling_stats_in_window import rolling_stats_in_window
 from rolling_most_freq_in_window import rolling_most_freq_in_window
@@ -24,25 +25,53 @@ RAW_DATA_DIR = os.environ.get("RAW_DATA_DIR")
 FEATURES_DATA_DIR = os.environ.get("FEATURES_DIR")
 VISUALIZATION_DIR = os.environ.get("VISUALIZATION_DIR")
 
-time_data = pd.read_csv(path.join(RAW_DATA_DIR, 'events.csv'),
-                        parse_dates=['timestamp'],
-                        infer_datetime_format=True)
 
-app_data = pd.read_csv(path.join(RAW_DATA_DIR, 'app_events.csv'))
+gatrain = pd.read_csv(os.path.join(RAW_DATA_DIR,'gender_age_train.csv'),
+                      index_col='device_id')
+gatest = pd.read_csv(os.path.join(RAW_DATA_DIR,'gender_age_test.csv'),
+                     index_col = 'device_id')
 
-app_category = pd.read_csv(path.join(RAW_DATA_DIR, 'app_labels.csv'))
-app_category = app_category.sort_values(by='label_id')
-app_category['label_id'], map_label_id = pd.factorize(app_category['label_id'])
+events = pd.read_csv(path.join(RAW_DATA_DIR, 'events.csv'),
+                     parse_dates=['timestamp'],
+                     infer_datetime_format=True,
+                     index_col='event_id'
+                     )
 
-time_data = time_data.sort_values(by='device_id')
-time_data['device_id'], map_device_id = pd.factorize(time_data['device_id'])
+appevents = pd.read_csv(path.join(RAW_DATA_DIR, 'app_events.csv'),
+                        dtype={'is_installed':bool, 'is_active':bool})
+installed = appevents.drop('is_active', 1).query('is_installed == True')
+active = appevents.drop('is_installed', 1).query('is_active == True')
 
-# create features matrixes
-cols = set(app_category['label_id'].sort_values())
-rows = set(time_data['device_id'].sort_values())
+applabels = pd.read_csv(os.path.join(RAW_DATA_DIR, 'app_labels.csv'))
+# keep only the labels of the apps that we have events of = have been used at least once
+applabels_inst = applabels.loc[applabels['app_id'].isin(installed['app_id'].unique())]
+applabels_actv = applabels.loc[applabels['app_id'].isin(active['app_id'].unique())]
 
-installed_matrix = np.zeros((len(rows), len(cols)))
-active_matrix = np.zeros((len(rows), len(cols)))
+appencoder = LabelEncoder().fit(appevents['app_id'])
+applabels_inst['app'] = appencoder.transform(applabels_inst['app_id'])
+applabels_actv['app'] = appencoder.transform(applabels_actv['app_id'])
+
+labelencoder = LabelEncoder().fit(applabels['label_id'])
+applabels_inst['label'] = labelencoder.transform(applabels_inst['label_id'])
+applabels_actv['label'] = labelencoder.transform(applabels_actv['label_id'])
+nlabels = len(labelencoder.classes_)
+
+inst_deviceapps = (installed.merge(events[['device_id']],
+                                   how='left',
+                                   left_on='event_id',
+                                   right_index=True)
+                            .groupby(['device_id', 'app'])['app']
+                            .agg(['size'])
+                     )
+
+actv_deviceapps = (active.merge(events[['device_id']],
+                                how='left',
+                                left_on='event_id',
+                                right_index=True)
+                          .groupby(['device_id', 'app'])['app']
+                          .agg(['size'])
+                     )
+
 
 app_category = (app_category
                 .sort_values(by='app_id')
@@ -169,6 +198,6 @@ categories_features = installed_cat.merge(active_cat,
                                          )
 categories_features['device_id'] = categories_features['device_id'].apply(lambda x:map_device_id[x])
 
-categories_features.to_csv(path.join(FEATURES_DATA_DIR, 
+categories_features.to_csv(path.join(FEATURES_DATA_DIR,
                                      'categories_features.csv'),
                            index=False)
