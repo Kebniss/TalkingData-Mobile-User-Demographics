@@ -2,7 +2,6 @@
 
 import pandas as pd
 import numpy as np
-%matplotlib inline
 import seaborn as sns
 import matplotlib.pyplot as plt
 import os
@@ -13,14 +12,13 @@ from sklearn.cross_validation import StratifiedKFold
 from sklearn.metrics import log_loss
 from os import path
 from dotenv import load_dotenv, find_dotenv
+%matplotlib inline
 
 dotenv_path = find_dotenv()
 load_dotenv(dotenv_path)
 
-PROJECT_DIR = os.environ.get("PROJECT_DIR")
 RAW_DATA_DIR = os.environ.get("RAW_DATA_DIR")
 FEATURES_DATA_DIR = os.environ.get("FEATURES_DIR")
-VISUALIZATION_DIR = os.environ.get("VISUALIZATION_DIR")
 MODELS_DIR = os.environ.get("MODELS_DIR")
 
 gatrain = pd.read_csv(os.path.join(RAW_DATA_DIR,'gender_age_train.csv'),
@@ -134,7 +132,7 @@ Cs = np.logspace(-3,0,4)
 res = []
 for C in Cs:
     res.append(score(LogisticRegression(C = C), nclasses))
-plt.semilogx(Cs, res,'-o');
+plt.semilogx(Cs, res,'-o')
 
 score(LogisticRegression(C=0.01))
 

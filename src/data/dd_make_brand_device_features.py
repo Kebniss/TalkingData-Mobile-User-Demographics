@@ -1,9 +1,9 @@
 
 import os
 import sys
-from os import path
 import numpy as np
 import pandas as pd
+from os import path
 from scripts import *
 from scipy import sparse, io
 from datetime import timedelta
@@ -20,48 +20,70 @@ from rolling_most_freq_in_window import rolling_most_freq_in_window
 dotenv_path = find_dotenv()
 load_dotenv(dotenv_path)
 
-PROJECT_DIR = os.environ.get("PROJECT_DIR")
 RAW_DATA_DIR = os.environ.get("RAW_DATA_DIR")
 FEATURES_DATA_DIR = os.environ.get("FEATURES_DIR")
-VISUALIZATION_DIR = os.environ.get("VISUALIZATION_DIR")
 
 gatrain = pd.read_csv(os.path.join(RAW_DATA_DIR,'gender_age_train.csv'),
                       index_col='device_id')
 gatest = pd.read_csv(os.path.join(RAW_DATA_DIR,'gender_age_test.csv'),
                      index_col = 'device_id')
 
-phone = pd.read_csv(path.join(RAW_DATA_DIR,'phone_brand_device_model.csv'))
-phone = phone.drop_duplicates('device_id',keep='first').set_index('device_id')
-
 gatrain['trainrow'] = np.arange(gatrain.shape[0])
 gatest['testrow'] = np.arange(gatest.shape[0])
 
+phone = pd.read_csv(path.join(RAW_DATA_DIR,'phone_brand_device_model.csv'))
+phone = phone.drop_duplicates('device_id',keep='first')
+
+specs_table = pd.read_csv(path.join(FEATURES_DATA_DIR, 'specs_table.csv'))
+model_mapping = pd.read_csv(path.join(FEATURES_DATA_DIR, 'model_mapping.csv'))
+brand_mapping = pd.read_csv(path.join(FEATURES_DATA_DIR, 'brand_mapping.csv'))
+
+phone = phone.merge(brand_mapping, how='left', left_on='phone_brand',
+                                      right_on='phone_brand_chinese')
+phone = phone.merge(model_mapping, how='left', left_on='device_model',
+                                      right_on='device_model_chinese')
+phone = phone.merge(specs_table,
+                    left_on=['phone_brand_latin', 'device_model_latin'],
+                    right_on=['phone_brand', 'device_model'],
+                    how='left',
+                    suffixes=['', '_R'])
+phone = phone.drop(['phone_brand_latin', 'device_model_latin',
+                    'phone_brand_chinese', 'device_model_chinese',
+                    'phone_brand_R', 'device_model_R'], axis=1)
+phone = phone.drop_duplicates('device_id',keep='first').set_index('device_id')
 # PHONE BRAND
 
 brandencoder = LabelEncoder().fit(phone['phone_brand'])
 phone['brand'] = brandencoder.transform(phone['phone_brand'])
 gatrain['brand'] = phone['brand']
 gatest['brand'] = phone['brand']
-Xtr_brand = csr_matrix((np.ones(gatrain.shape[0]),
-                         (gatrain['trainrow'], gatrain['brand']))
-                       )
-Xte_brand = csr_matrix((np.ones(gatest.shape[0]),
-                        (gatest['testrow'], gatest['brand']))
-                       )
+
 
 m = phone['phone_brand'].str.cat(phone['device_model'])
 brandencoder = LabelEncoder().fit(m)
 phone['model'] = brandencoder.transform(m)
 gatrain['model'] = phone['model']
 gatest['model'] = phone['model']
-Xtr_model = csr_matrix((np.ones(gatrain.shape[0]),
-                         (gatrain['trainrow'], gatrain['model']))
-                       )
-Xte_model = csr_matrix((np.ones(gatest.shape[0]),
-                        (gatest['testrow'], gatest['model']))
-                       )
 
-phone_train = hstack((Xtr_brand, Xtr_model), format='csr')
-io.mmwrite(path.join(FEATURES_DATA_DIR, 'phone_features_train'), phone_train)
-phone_test = hstack((Xte_brand, Xte_model), format='csr')
-io.mmwrite(path.join(FEATURES_DATA_DIR, 'phone_features_test'), phone_test)
+phone = phone.drop(['phone_brand', 'device_model'], 1)
+phone = phone.fillna(-1)
+phone = (phone.join(gatrain[['trainrow']], how='left')
+              .join(gatest[['testrow']], how='left'))
+
+phone_train = phone.dropna(subset=['trainrow']).drop('testrow',1)
+phone_test = phone.dropna(subset=['testrow']).drop('trainrow',1)
+
+assert phone_train.reset_index()['device_id'].nunique() == phone_train.shape[0]
+assert sorted(phone_train.reset_index()['device_id']) == sorted(gatrain.reset_index()['device_id'])
+
+assert phone_test.reset_index()['device_id'].nunique() == phone_test.shape[0]
+assert sorted(phone_test.reset_index()['device_id']) == sorted(gatest.reset_index()['device_id'])
+
+phone_train = phone_train.sort_values(by='trainrow').drop('trainrow', 1)
+phone_test = phone_test.sort_values(by='testrow').drop('testrow', 1)
+
+phone_train_sparse = csr_matrix(phone_train.values)
+phone_test_sparse = csr_matrix(phone_test.values)
+
+io.mmwrite(path.join(FEATURES_DATA_DIR, 'specs_phone_features_train'), phone_train)
+io.mmwrite(path.join(FEATURES_DATA_DIR, 'specs_phone_features_test'), phone_test)

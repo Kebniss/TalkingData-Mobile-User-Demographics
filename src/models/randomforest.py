@@ -1,4 +1,5 @@
-''' THIS MODEL OBTAINS A SCORE OF 2.33 ON KAGGLE'''
+''' THIS MODEL WITH DD FEATURES OBTAINS A SCORE OF 2.33 ON KAGGLE'''
+''' THIS MODEL WITH MY FEATURES OBTAINS A SCORE OF 2.34 ON KAGGLE'''
 
 import os
 import numpy as np
@@ -29,7 +30,7 @@ RAW_DATA_DIR = os.environ.get("RAW_DATA_DIR")
 FEATURES_DATA_DIR = os.environ.get("FEATURES_DIR")
 MODELS_DIR = os.environ.get("MODELS_DIR")
 
-data = io.mmread(path.join(FEATURES_DATA_DIR, 'train_set_dd')).tocsr()
+data = io.mmread(path.join(FEATURES_DATA_DIR, 'train_set_dd_enh')).tocsr()
 gatrain = pd.read_csv(os.path.join(RAW_DATA_DIR,'gender_age_train.csv'),
                       index_col='device_id')
 labels = gatrain['group']
@@ -76,5 +77,5 @@ sig_clf = CalibratedClassifierCV(clf, method='sigmoid', cv='prefit' )
 sig_clf.fit(X_dev, y_dev)
 
 import pickle
-with open(path.join(MODELS_DIR, 'rfc_200e_calib.pkl'), 'wb') as f:
+with open(path.join(MODELS_DIR, 'rfc_200e_calib_enh_feat.pkl'), 'wb') as f:
     pickle.dump(sig_clf, f)
