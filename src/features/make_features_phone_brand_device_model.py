@@ -1,21 +1,22 @@
 """ This script loads the raw phone_brand_device_model dataset, creates the
     features and deals with NaN values."""
 
-import os.path
+from os import path
 import pandas as pd
 import pickle as pkl
 from scripts import *
+from dotenv import load_dotenv, find_dotenv
 
-os.getcwd()
-os.chdir('..\..')
-path = os.getcwd() + '\data\\raw\phone_brand_device_model.csv'
-data = pd.read_csv(path)
-path = os.getcwd() + '\data\\processed\specs_table.csv'
-specs_table = pd.read_csv(path)
-path = os.getcwd() + '\data\\processed\model_mapping.csv'
-model_mapping = pd.read_csv(path)
-path = os.getcwd() + '\data\\processed\\brand_mapping.csv'
-brand_mapping = pd.read_csv(path)
+dotenv_path = find_dotenv()
+load_dotenv(dotenv_path)
+
+RAW_DATA_DIR = os.environ.get("RAW_DATA_DIR")
+FEATURES_DATA_DIR = os.environ.get("FEATURES_DIR")
+
+data = pd.read_csv(path.join(RAW_DATA_DIR, 'phone_brand_device_model.csv'))
+specs_table = pd.read_csv(path.join(FEATURES_DATA_DIR, 'specs_table.csv'))
+model_mapping = pd.read_csv(path.join(FEATURES_DATA_DIR, 'model_mapping.csv'))
+brand_mapping = pd.read_csv(path.join(FEATURES_DATA_DIR, 'brand_mapping.csv'))
 
 data = data.drop_duplicates('device_id')
 

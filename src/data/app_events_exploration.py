@@ -29,7 +29,7 @@ labelled_app_events = (train.merge(events, how='left', on='device_id')
                             )
 labelled_app_events = labelled_app_events.fillna(-1)
 
-sns.distplot(train['age'], hist=False);
+sns.distplot(train['age'], hist=False)
 #here age is not normally distributaed between 20 - 40 are the dominate age
 
 sns.kdeplot(train.age[train['gender']=="M"], label="Male")
@@ -38,11 +38,106 @@ plt.legend()
 
 # Age distribution for male and female Female at old age are using more mobile devices then males
 
-print("Male age droup count")
+print("Male age group count")
 ax = sns.countplot(x="group", data=train[train['gender']=="M"])
 
-print("Female age droup count")
+print("Female age group count")
 ax = sns.countplot(x="group", data=train[train['gender']=="F"])
+
+
+# DAY ------------------------------------------------------------------------
+import calendar
+labelled_app_events['week_day'] = labelled_app_events.timestamp.apply(lambda x: calendar.day_name[x.weekday()])
+ax = sns.countplot(x="week_day", data=labelled_app_events)
+
+days = np.sort(labelled_app_events['week_day'].unique())
+ind = np.arange(len(days))  # the x locations for the groups
+width = 0.35
+
+male_days = []
+female_days = []
+for day in days:
+    day_rows = labelled_app_events[ labelled_app_events['week_day'] == day]
+    female_days.append(len(day_rows.query('gender == "F"')))
+    male_days.append(len(day_rows.query('gender == "M"')))
+
+p1 = plt.bar(ind, male_days, width, color="#1292db")
+p2 = plt.bar(ind, female_days, width, color="#ff69b4", bottom=male_days)
+
+plt.ylabel('Number of events')
+plt.title('Difference in use of the ten most frequent apps between M and F')
+plt.legend((p2[0], p1[0]), ('Women', 'Men'))
+plt.show()
+
+tot = map(add, female_days, male_days)
+total = pd.Series(tot, index=range(len(male_days)))
+f_users = list(female_days/total)
+m_users = list(male_days/total)
+
+f_users = [ '%.3f' % elem for elem in f_users]
+m_users = [ '%.3f' % elem for elem in m_users]
+
+print "During the whole day the percentage of users are: "
+print "- females: {}\n- males: {}".format(f_users, m_users)
+
+
+
+labelled_app_events['hours'] = labelled_app_events['timestamp'].apply(lambda x: x.hour)
+ax = sns.countplot(x='hours', data=labelled_app_events)
+
+hours = np.sort(labelled_app_events['hours'].unique())
+ind = np.arange(len(hours))  # the x locations for the groups
+width = 0.35
+
+male_hours = []
+female_hours = []
+for hour in hours:
+    hour_rows = labelled_app_events[ labelled_app_events['hours'] == hour]
+    female_hours.append(len(hour_rows.query('gender == "F"')))
+    male_hours.append(len(hour_rows.query('gender == "M"')))
+
+p1 = plt.bar(ind, male_hours, width, color="#1292db")
+p2 = plt.bar(ind, female_hours, width, color="#ff69b4", bottom=male_hours)
+plt.ylabel('Number of events')
+plt.title('Difference in use of the ten most frequent apps between M and F')
+plt.legend((p2[0], p1[0]), ('Women', 'Men'))
+plt.show()
+
+tot = map(add, female_hours, male_hours)
+total = pd.Series(tot, index=range(len(male_hours)))
+f_users = list(female_hours/total)
+m_users = list(male_hours/total)
+
+f_users = [ '%.3f' % elem for elem in f_users]
+m_users = [ '%.3f' % elem for elem in m_users]
+
+print "During the whole day the percentage of users are: "
+print "- females: {}\n- males: {}".format(f_users, m_users)
+
+age_h_f = (labelled_app_events[labelled_app_events['gender'] == 'F']
+           .groupby(['hours', 'group'])
+           .agg('count')
+           )
+age_h_m = (labelled_app_events[labelled_app_events['gender'] == 'M']
+           .groupby(['hours', 'group'])
+           .agg('count')
+           )
+age_h = (labelled_app_events
+           .groupby(['hours', 'group'])
+           .agg('count')
+           )
+age_h = age_h['device_id'].reset_index()
+
+age_h = age_h.groupby('hours')['device_id'].agg({'count_per_group':( lambda x: list(x))})
+
+age_h.plot( x='hours', kind='bar', stacked=True, figsize=(24,12))
+age_h[pd.isnull(age_h.device_id)]
+groups = age_h.pivot(index='hours', columns='group')
+groups.plot(kind='bar', stacked=True)
+
+df2 = pd.DataFrame(np.random.rand(10, 4), columns=['a', 'b', 'c', 'd'])
+
+
 # Installed apps --------------------------------------------------------------
 
 installed_events = labelled_app_events.query("is_installed == 1.0")
@@ -210,7 +305,6 @@ sns.kdeplot(c_g.unique_installed_count[c_g['gender']=="M"], label="Male")
 sns.kdeplot(c_g.unique_installed_count[c_g['gender']=="F"], label="Female")
 plt.legend()
 
-
 # NUMBER OF ACTIVE APPS ------------------------------------------------------
 
 tmp = active_events[['app_id', 'device_id']]
@@ -232,74 +326,3 @@ plt.legend()
 
 # the graphs above highlight that there is a little but notable difference
 # between how many apps male and females have installed
-
-labelled_app_events['hours'] = labelled_app_events['timestamp'].apply(lambda x: x.hour)
-ax = sns.countplot(x='hours', data=labelled_app_events)
-
-
-hours = np.sort(labelled_app_events['hours'].unique())
-ind = np.arange(len(hours))  # the x locations for the groups
-width = 0.35
-
-male_hours = []
-female_hours = []
-for hour in hours:
-    hour_rows = labelled_app_events[ labelled_app_events['hours'] == hour]
-    female_hours.append(len(hour_rows.query('gender == "F"')))
-    male_hours.append(len(hour_rows.query('gender == "M"')))
-
-p1 = plt.bar(ind, male_hours, width, color="#1292db")
-p2 = plt.bar(ind, female_hours, width, color="#ff69b4", bottom=male_hours)
-
-plt.ylabel('Number of events')
-plt.title('Difference in use of the ten most frequent apps between M and F')
-plt.legend((p2[0], p1[0]), ('Women', 'Men'))
-plt.show()
-
-
-tot = map(add, female_hours, male_hours)
-total = pd.Series(tot, index=range(len(male_hours)))
-f_users = list(female_hours/total)
-m_users = list(male_hours/total)
-
-f_users = [ '%.3f' % elem for elem in f_users]
-m_users = [ '%.3f' % elem for elem in m_users]
-
-print "During the whole day the percentage of users are: "
-print "- females: {}\n- males: {}".format(f_users, m_users)
-
-# DAY ------------------------------------------------------------------------
-import calendar
-labelled_app_events['week_day'] = labelled_app_events.timestamp.apply(lambda x: calendar.day_name[x.weekday()])
-ax = sns.countplot(x="week_day", data=labelled_app_events)
-
-days = np.sort(labelled_app_events['week_day'].unique())
-ind = np.arange(len(days))  # the x locations for the groups
-width = 0.35
-
-male_days = []
-female_days = []
-for day in days:
-    day_rows = labelled_app_events[ labelled_app_events['week_day'] == day]
-    female_days.append(len(day_rows.query('gender == "F"')))
-    male_days.append(len(day_rows.query('gender == "M"')))
-
-p1 = plt.bar(ind, male_days, width, color="#1292db")
-p2 = plt.bar(ind, female_days, width, color="#ff69b4", bottom=male_days)
-
-plt.ylabel('Number of events')
-plt.title('Difference in use of the ten most frequent apps between M and F')
-plt.legend((p2[0], p1[0]), ('Women', 'Men'))
-plt.show()
-
-
-tot = map(add, female_days, male_days)
-total = pd.Series(tot, index=range(len(male_days)))
-f_users = list(female_days/total)
-m_users = list(male_days/total)
-
-f_users = [ '%.3f' % elem for elem in f_users]
-m_users = [ '%.3f' % elem for elem in m_users]
-
-print "During the whole day the percentage of users are: "
-print "- females: {}\n- males: {}".format(f_users, m_users)
