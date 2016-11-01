@@ -41,6 +41,7 @@ print data['gender'].value_counts()
 print 'Sexes frequency: {:.3f} males, {:.3} females'.format(sex['M'], sex['F'])
 
 ax = sns.countplot(x='gender', data=data)
+ax.legend = ['Males', 'Females']
 
 sns.distplot(data['age'], hist=False)
 

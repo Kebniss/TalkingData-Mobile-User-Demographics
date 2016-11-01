@@ -63,7 +63,7 @@ events_train = train.merge(events, how='left', on='device_id')
 female_events = events_train[events_train['gender'] == 'F']
 male_events = events_train[events_train['gender'] == 'M']
 
-plt.figure(1, figsize=(12,6))
+plt.figure(2, figsize=(12,6))
 m2 = Basemap(projection='merc',
              llcrnrlat=-60,
              urcrnrlat=65,
@@ -271,3 +271,27 @@ plt.title("Event count per grid area in Beijing")
 plt.show()
 
 # Location seems like a good indicator of the age of the users.
+
+# MIDDLE OF THE SEA ---------------------------------------------------------
+lon_min, lon_max = -5, 5
+lat_min, lat_max = -5, 5
+
+plt.figure(1, figsize=(12,6))
+m2 = Basemap(projection='merc',
+             llcrnrlat=lat_min,
+             urcrnrlat=lat_max,
+             llcrnrlon=lon_min,
+             urcrnrlon=lon_max,
+             lat_ts=0,
+             resolution='c')
+
+m2.fillcontinents(color='#191919',lake_color='#000000') # dark grey land, black lakes
+m2.drawmapboundary(fill_color='#000000')                # black background
+m2.drawcountries(linewidth=0.1, color="w")              # thin white line for country borders
+
+# Plot the data
+mxy = m2(female_events["longitude"].tolist(), female_events["latitude"].tolist())
+m2.scatter(mxy[0], mxy[1], s=3, c="#ff69b4", lw=0, alpha=0.5, zorder=5)
+
+mxy = m2(male_events["longitude"].tolist(), male_events["latitude"].tolist())
+m2.scatter(mxy[0], mxy[1], s=3, c="#1292db", lw=0, alpha=0.5, zorder=5)

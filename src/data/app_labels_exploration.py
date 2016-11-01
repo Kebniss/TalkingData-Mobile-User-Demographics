@@ -232,41 +232,71 @@ plt.legend((p1[0], p2[0]), ('Men', 'Women'))
 plt.show()
 
 
-# NUMBER OF APP INSTALLED ----------------------------------------------------
+# NUMBER OF APPS INSTALLED ----------------------------------------------------
+gender = (installed_events[['device_id', 'gender']]
+          .drop_duplicates(subset='device_id', keep='first')
+          .set_index('device_id')
+          )
+tmp = installed_events[['app_id', 'device_id']]
+tmp_2 = tmp.groupby('device_id', as_index=False)['app_id'].agg({'installed_list':(lambda x: list(x))})
+
+tmp_2['unique_installed_count'] = tmp_2['installed_list'].apply(set).apply(len)
+tmp_2 = tmp_2.set_index('device_id')
+c_g = gender.join(tmp_2['unique_installed_count'], how='inner')
+
+sns.distplot(c_g.unique_installed_count[c_g['gender']=="M"], hist=False, label="Male")
+sns.distplot(c_g.unique_installed_count[c_g['gender']=="F"], hist=False, label="Female").axes.set_xlim(0,260)
+
+
+# NUMBER OF ACTIVE APPS ------------------------------------------------------
+gender = (active_events[['device_id', 'gender']]
+          .drop_duplicates(subset='device_id', keep='first')
+          .set_index('device_id')
+          )
+
+tmp = active_events[['app_id', 'device_id']]
+# even though the resulting column is called app_id it is the number of apps
+# active per one user over the whole week
+count = tmp.groupby('device_id').agg('count').sort_values(by='app_id', ascending=False)
+
+c_g = gender.join(count['app_id'], how='inner')
+
+plt.figure()
+
+sns.distplot(c_g.app_id[c_g['gender']=="M"], hist=False, label="Male")
+sns.distplot(c_g.app_id[c_g['gender']=="F"], hist=False, label="Female").axes.set_xlim(0,93000.0)
+
+
+# NUMBER OF LABELS INSTALLED ----------------------------------------------------
 gender = (installed_events[['device_id', 'gender']]
           .drop_duplicates(subset='device_id', keep='first')
           .set_index('device_id')
           )
 tmp = installed_events[['label_id', 'device_id']]
-count = tmp.groupby('device_id').agg('count').sort_values(by='label_id', ascending=False)
-tmp_2=tmp.groupby('device_id', as_index=False)['label_id'].agg({'installed_list':(lambda x: list(x))})
+tmp_2 = tmp.groupby('device_id', as_index=False)['label_id'].agg({'installed_list':(lambda x: list(x))})
 
 tmp_2['unique_installed_count'] = tmp_2['installed_list'].apply(set).apply(len)
 tmp_2 = tmp_2.set_index('device_id')
-
 c_g = gender.join(tmp_2['unique_installed_count'], how='inner')
 
-sns.distplot(c_g['unique_installed_count'], hist=False);
-#here age is not normally distributaed between 20 - 40 are the dominate age
-
 sns.kdeplot(c_g.unique_installed_count[c_g['gender']=="M"], label="Male")
-sns.kdeplot(c_g.unique_installed_count[c_g['gender']=="F"], label="Female")
-plt.legend()
+sns.kdeplot(c_g.unique_installed_count[c_g['gender']=="F"], label="Female").axes.set_xlim(0,215)
 
 
-# NUMBER OF ACTIVE APPS ------------------------------------------------------
+# NUMBER OF ACTIVE LSBELS ------------------------------------------------------
+gender = (active_events[['device_id', 'gender']]
+          .drop_duplicates(subset='device_id', keep='first')
+          .set_index('device_id')
+          )
 
 tmp = active_events[['label_id', 'device_id']]
+# even though the resulting column is called label_id it is the number of apps
+# active per one user over the whole week
 count = tmp.groupby('device_id').agg('count').sort_values(by='label_id', ascending=False)
-tmp_2=tmp.groupby('device_id', as_index=False)['label_id'].agg({'active_list':(lambda x: list(x))})
 
-tmp_2['unique_active_count'] = tmp_2['active_list'].apply(set).apply(len)
-tmp_2 = tmp_2.set_index('device_id')
+c_g = gender.join(count['label_id'], how='inner')
 
-c_g = gender.join(tmp_2['unique_active_count'], how='inner')
+plt.figure()
 
-sns.distplot(c_g['unique_active_count'], hist=False)
-#here age is not normally distributaed between 20 - 40 are the dominate age
-
-sns.kdeplot(c_g.unique_active_count[c_g['gender']=="M"], label="Male")
-sns.kdeplot(c_g.unique_active_count[c_g['gender']=="F"], label="Female")
+sns.distplot(c_g.label_id[c_g['gender']=="M"], hist=False, label="Male")
+sns.distplot(c_g.label_id[c_g['gender']=="F"], hist=False, label="Female").axes.set_xlim(0,93000.0)
