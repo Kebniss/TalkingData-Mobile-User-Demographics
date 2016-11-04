@@ -67,10 +67,20 @@ installed_deviceapps.head()
 
 # separate train and test subset and create sparse matrixes
 d = installed_deviceapps.dropna(subset=['trainrow'])
+total_installed = d.groupby('device_id')['count'].agg(['sum'])
+d = d.set_index('device_id')
+for d_id in total_installed.index.values:
+    d.loc[d_id,'count'] = d.ix[d_id]['count']/total_installed.ix[d_id].values
+d = d.reset_index('device_id')
 Xtr_app_inst = csr_matrix( ( d['count'], (d['trainrow'], d['app']) ),
                              shape=(gatrain.shape[0], napps)
                           )
 d = installed_deviceapps.dropna(subset=['testrow'])
+total_installed = d.groupby('device_id')['count'].agg(['sum'])
+d = d.set_index('device_id')
+for d_id in total_installed.index.values:
+    d.loc[d_id,'count'] = d.ix[d_id]['count']/total_installed.ix[d_id].values
+d = d.reset_index('device_id')
 Xte_app_inst = csr_matrix( (d['count'], (d['testrow'], d['app'])),
                             shape=(gatest.shape[0], napps)
                           )
@@ -90,10 +100,20 @@ active_deviceapps = ( active_deviceapps.join(gatrain[['trainrow']], how='left')
 active_deviceapps.head()
 
 d = active_deviceapps.dropna(subset=['trainrow'])
+total_active = d.groupby('device_id')['count'].agg(['sum'])
+d = d.set_index('device_id')
+for d_id in total_active.index.values:
+    d.loc[d_id,'count'] = d.ix[d_id]['count']/total_active.ix[d_id].values
+d = d.reset_index('device_id')
 Xtr_app_actv = csr_matrix( ( d['count'], (d['trainrow'], d['app']) ),
                         shape=(gatrain.shape[0], napps)
                      )
 d = active_deviceapps.dropna(subset=['testrow'])
+total_active = d.groupby('device_id')['count'].agg(['sum'])
+d = d.set_index('device_id')
+for d_id in total_active.index.values:
+    d.loc[d_id,'count'] = d.ix[d_id]['count']/total_active.ix[d_id].values
+d = d.reset_index('device_id')
 Xte_app_actv = csr_matrix( (d['count'], (d['testrow'], d['app'])),
                             shape=(gatest.shape[0], napps)
                             )
@@ -104,12 +124,12 @@ Xte_app_actv = csr_matrix( (d['count'], (d['testrow'], d['app'])),
 applabels_inst = applabels.loc[applabels['app_id'].isin(installed['app_id'].unique())]
 applabels_actv = applabels.loc[applabels['app_id'].isin(active['app_id'].unique())]
 
-applabels_inst['app'] = appencoder.transform(applabels_inst['app_id'])
-applabels_actv['app'] = appencoder.transform(applabels_actv['app_id'])
+applabels_inst.loc[:,'app'] = appencoder.transform(applabels_inst['app_id'])
+applabels_actv.loc[:,'app'] = appencoder.transform(applabels_actv['app_id'])
 
 labelencoder = LabelEncoder().fit(applabels['label_id'])
-applabels_inst['label'] = labelencoder.transform(applabels_inst['label_id'])
-applabels_actv['label'] = labelencoder.transform(applabels_actv['label_id'])
+applabels_inst.loc[:,'label'] = labelencoder.transform(applabels_inst['label_id'])
+applabels_actv.loc[:,'label'] = labelencoder.transform(applabels_actv['label_id'])
 nlabels = len(labelencoder.classes_)
 
 inst_devicelabels = (installed_deviceapps[['device_id', 'app']]
@@ -123,6 +143,26 @@ inst_devicelabels = (inst_devicelabels.join(gatrain[['trainrow']], how='left')
                                       )
 inst_devicelabels.head()
 
+d = inst_devicelabels.dropna(subset=['trainrow'])
+total_installed = d.groupby('device_id')['count'].agg(['sum'])
+d = d.set_index('device_id')
+for d_id in total_installed.index.values:
+    d.loc[d_id,'count'] = d.ix[d_id]['count']/total_installed.ix[d_id].values
+d = d.reset_index('device_id')
+Xtr_label_inst = csr_matrix( (d['count'], (d['trainrow'], d['label'])),
+                             shape=(gatrain.shape[0], nlabels)
+                             )
+
+d = inst_devicelabels.dropna(subset=['testrow'])
+total_installed = d.groupby('device_id')['count'].agg(['sum'])
+d = d.set_index('device_id')
+for d_id in total_installed.index.values:
+    d.loc[d_id,'count'] = d.ix[d_id]['count']/total_installed.ix[d_id].values
+d = d.reset_index('device_id')
+Xte_label_inst = csr_matrix( (d['count'], (d['testrow'], d['label'])),
+                             shape=(gatest.shape[0], nlabels)
+                             )
+
 actv_devicelabels = (active_deviceapps[['device_id', 'app']]
                      .merge(applabels_actv[['app', 'label']])
                      .groupby(['device_id','label'])['app']
@@ -135,35 +175,39 @@ actv_devicelabels = (actv_devicelabels.join(gatrain[['trainrow']], how='left')
 actv_devicelabels.head()
 
 
-d = inst_devicelabels.dropna(subset=['trainrow'])
-Xtr_label_inst = csr_matrix( (d['count'], (d['trainrow'], d['label'])),
-                             shape=(gatrain.shape[0], nlabels)
-                             )
-d = inst_devicelabels.dropna(subset=['testrow'])
-Xte_label_inst = csr_matrix( (d['count'], (d['testrow'], d['label'])),
-                             shape=(gatest.shape[0], nlabels)
-                             )
-
 d = actv_devicelabels.dropna(subset=['trainrow'])
+total_active = d.groupby('device_id')['count'].agg(['sum'])
+d = d.set_index('device_id')
+for d_id in total_active.index.values:
+    d.loc[d_id,'count'] = d.ix[d_id]['count']/total_active.ix[d_id].values
+d = d.reset_index('device_id')
 Xtr_label_actv = csr_matrix( (d['count'], (d['trainrow'], d['label'])),
                              shape=(gatrain.shape[0], nlabels)
                              )
+
 d = actv_devicelabels.dropna(subset=['testrow'])
+total_active = d.groupby('device_id')['count'].agg(['sum'])
+d = d.set_index('device_id')
+for d_id in total_active.index.values:
+    d.loc[d_id,'count'] = d.ix[d_id]['count']/total_active.ix[d_id].values
+d = d.reset_index('device_id')
 Xte_label_actv = csr_matrix( (d['count'], (d['testrow'], d['label'])),
                              shape=(gatest.shape[0], nlabels)
                              )
 
 train_apps = hstack( (Xtr_app_actv, Xtr_app_inst, Xtr_label_actv, Xtr_label_inst),
                      format='csr')
+test_apps = hstack( (Xte_app_actv, Xte_app_inst, Xte_label_actv, Xte_label_inst),
+                    format='csr')
+
+io.mmwrite(path.join(FEATURES_DATA_DIR, 'cum_app_features_train'), train_apps)
+io.mmwrite(path.join(FEATURES_DATA_DIR, 'cum_app_features_test'), test_apps)
 
 svd = TruncatedSVD(n_components=500)
 svd.fit(train_apps)
 train_apps = svd.transform(train_apps)
 train_apps = csr_matrix(train_apps)
-io.mmwrite(path.join(FEATURES_DATA_DIR, 'cum_app_features_train'), train_apps)
+io.mmwrite(path.join(FEATURES_DATA_DIR, '500SVD_cum_app_features_train'), train_apps)
 
-test_apps = hstack( (Xte_app_actv, Xte_app_inst, Xte_label_actv, Xte_label_inst),
-                    format='csr')
 test_apps = csr_matrix(svd.transform(test_apps))
-
-io.mmwrite(path.join(FEATURES_DATA_DIR, 'cum_app_features_test'), test_apps)
+io.mmwrite(path.join(FEATURES_DATA_DIR, '500SVD_cum_app_features_test'), test_apps)

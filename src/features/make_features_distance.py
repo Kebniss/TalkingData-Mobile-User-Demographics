@@ -27,14 +27,13 @@ data.columns = ['event_id', 'device_id', 'timestamp', 'lon', 'lat']
 # find and remove nans
 data = drop_nans(data)
 
-lat_long_counts = data.groupby(['device_id', 'lat', 'lon'])['event_id'].agg('count').rename('count')
+lat_long_counts = data.groupby(['device_id', 'lat', 'lon'])['event_id'].agg(['count'])
 positions = lat_long_counts.reset_index(['lat', 'lon']).groupby(level=0).max()
 
-tex_lat_long_counts = (pd.DataFrame(data
-                                    .groupby(['device_id', 'lat', 'lon'])['event_id']
-                                    .agg('count')
-                                    .rename('count')
-                                    )
+tex_lat_long_counts = (data
+                       .groupby(['device_id', 'lat', 'lon'])['event_id']
+                       .agg('count')
+                       .rename('count')
                        )
 tex_lat_long_counts = (tex_lat_long_counts.join(tex_lat_long_counts
                                                 .groupby(level=0)
