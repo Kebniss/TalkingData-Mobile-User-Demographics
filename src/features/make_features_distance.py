@@ -11,6 +11,7 @@ from operations_on_list import *
 from drop_nans import drop_nans
 from geopy.distance import great_circle
 from dotenv import load_dotenv, find_dotenv
+from sklearn.preprocessing import StandardScaler
 from get_most_recent_event import get_most_recent_event
 from rolling_stats_in_window import rolling_stats_in_window
 
@@ -45,10 +46,18 @@ tex_lat_long_counts = (tex_lat_long_counts
                        )
 data = data.set_index(['device_id', 'lat', 'lon'])
 data_max = tex_lat_long_counts.join(data, how='left')
+# keep = last avoids that when for a d_id there are two or more euqally frequent
+# positions the tuple lo0,la0 to be picked in case it is the first value
 data_max = (data_max
             .reset_index()
-            .drop_duplicates(subset='device_id', keep='last')
+            .drop_duplicates(subset='device_id', keep='last') # avoids (lo0,la0)
             .drop('count',1)
             )
+
+# preprocessing: scaling lat and lon
+lat_scale,lon_scale = StandardScaler(), StandardScaler()
+data_max['lat'] = lat_scale.fit_transform(data_max['lat'].reshape(-1, 1), [0,1])
+data_max['lon'] = lon_scale.fit_transform(data_max['lon'].reshape(-1, 1), [0,1])
+
 #save
 data_max.to_csv(os.path.join(FEATURES_DATA_DIR, 'positions.csv'))
