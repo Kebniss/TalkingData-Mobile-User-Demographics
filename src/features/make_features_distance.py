@@ -5,15 +5,9 @@ import os
 import os.path
 import numpy as np
 import pandas as pd
-from scripts import *
-from datetime import timedelta
-from operations_on_list import *
 from drop_nans import drop_nans
-from geopy.distance import great_circle
 from dotenv import load_dotenv, find_dotenv
 from sklearn.preprocessing import StandardScaler
-from get_most_recent_event import get_most_recent_event
-from rolling_stats_in_window import rolling_stats_in_window
 
 dotenv_path = find_dotenv()
 load_dotenv(dotenv_path)
