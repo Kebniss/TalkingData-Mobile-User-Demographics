@@ -32,8 +32,7 @@ positions = lat_long_counts.reset_index(['lat', 'lon']).groupby(level=0).max()
 
 tex_lat_long_counts = (data
                        .groupby(['device_id', 'lat', 'lon'])['event_id']
-                       .agg('count')
-                       .rename('count')
+                       .agg(['count'])
                        )
 tex_lat_long_counts = (tex_lat_long_counts.join(tex_lat_long_counts
                                                 .groupby(level=0)
@@ -48,7 +47,7 @@ data = data.set_index(['device_id', 'lat', 'lon'])
 data_max = tex_lat_long_counts.join(data, how='left')
 data_max = (data_max
             .reset_index()
-            .drop_duplicates(subset='device_id')
+            .drop_duplicates(subset='device_id', keep='last')
             .drop('count',1)
             )
 #save
