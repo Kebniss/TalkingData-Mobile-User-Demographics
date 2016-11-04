@@ -1,6 +1,7 @@
 """ This script loads the raw phone_brand_device_model dataset, creates the
     features and deals with NaN values."""
 
+import os
 from os import path
 import pandas as pd
 import pickle as pkl
@@ -30,14 +31,12 @@ data = data.drop_duplicates('device_id')
 data = data.rename( columns = {'phone_brand_latin': 'phone_brand',
                                'device_model_latin': 'device_model'})
 
-data = data.merge(specs_table,
+data = data.merge(specs_table[['phone_brand', 'device_model', 'price_eur']],
                  on=['phone_brand', 'device_model'],
                  how='left',
                  suffixes=['', '_R'])
 
-for c in data[['price_eur', 'screen_size', 'ram_gb', 'release_month', 'release_year', 'camera']].columns:
-    data[c] = fillnan(data[c])
+data['price_eur'] = data['price_eur'].fillna(-1)
 
 #save
-path = os.getcwd() + '\data\\processed\\specs_features.csv'
-data.to_csv(path, index=False)
+data.to_csv(path.join(RAW_DATA_DIR, 'phone_brand_model_price.csv'), index=False)
