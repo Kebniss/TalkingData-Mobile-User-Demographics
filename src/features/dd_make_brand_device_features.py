@@ -1,4 +1,3 @@
-
 import os
 import sys
 import numpy as np
@@ -51,13 +50,14 @@ phone = phone.drop(['phone_brand_latin', 'device_model_latin',
                     'phone_brand_chinese', 'device_model_chinese',
                     'phone_brand_R', 'device_model_R'], axis=1)
 phone = phone.drop_duplicates('device_id',keep='first').set_index('device_id')
+
+
 # PHONE BRAND
 
 brandencoder = LabelEncoder().fit(phone['phone_brand'])
 phone['brand'] = brandencoder.transform(phone['phone_brand'])
 gatrain['brand'] = phone['brand']
 gatest['brand'] = phone['brand']
-
 
 m = phone['phone_brand'].str.cat(phone['device_model'])
 brandencoder = LabelEncoder().fit(m)
