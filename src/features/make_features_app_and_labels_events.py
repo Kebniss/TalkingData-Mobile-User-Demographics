@@ -8,17 +8,13 @@ import numpy as np
 import pandas as pd
 from scripts import *
 from scipy import sparse, io
-from datetime import timedelta
 from drop_nans import drop_nans
-from operations_on_list import *
-from matplotlib import pyplot as plt
 from scipy.sparse import csr_matrix, hstack
 from dotenv import load_dotenv, find_dotenv
 from sklearn.preprocessing import LabelEncoder
 from sklearn.decomposition import TruncatedSVD
-from get_most_recent_event import get_most_recent_event
-from rolling_stats_in_window import rolling_stats_in_window
-from rolling_most_freq_in_window import rolling_most_freq_in_window
+from sklearn.preprocessing import StandardScaler
+
 
 dotenv_path = find_dotenv()
 load_dotenv(dotenv_path)
