@@ -48,7 +48,7 @@ tex_lat_long_counts = (tex_lat_long_counts
 data = data.set_index(['device_id', 'lat', 'lon'])
 data_max = tex_lat_long_counts.join(data, how='left')
 # keep = last avoids that when for a d_id there are two or more euqally frequent
-# positions the tuple lo0,la0 to be picked in case it is the first value
+# positions the tuple lo0,la0 is picked if it is the first value
 data_max = (data_max
             .reset_index()
             .drop_duplicates(subset='device_id', keep='last') # avoids (lo0,la0)
@@ -64,9 +64,7 @@ data_max = (data_max.merge(gatrain[['device_id','trainrow']], on='device_id', ho
                     .merge(gatest[['device_id','testrow']], on='device_id', how='left')
                     )
 
-# generate dense data for random forest
-train_data = data_max.dropna(subset=['trainrow']).drop(['trainrow', 'testrow'],1)
-test_data = data_max.dropna(subset=['testrow']).drop(['trainrow', 'testrow'],1)
+
 
 # generate sparse data for logistic classifier
 lat_encoder = LabelEncoder().fit(data_max['lat'])
@@ -97,7 +95,3 @@ Xtest =  hstack((Xte_lat, Xte_lon), format='csr')
 #save sparse dataset
 io.mmwrite(path.join(FEATURES_DATA_DIR, 'position_sparse_train'), Xtrain)
 io.mmwrite(path.join(FEATURES_DATA_DIR, 'position_sparse_test'), Xtest)
-
-#save dense dataset
-train_data.to_csv(os.path.join(FEATURES_DATA_DIR, 'position_dense_train.csv'), index=False)
-test_data.to_csv(os.path.join(FEATURES_DATA_DIR, 'position_dense_test.csv'), index=False)
