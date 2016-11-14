@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 from scipy import sparse, io
 from drop_nans import drop_nans
+from scipy.sparse import csr_matrix, hstack
 from dotenv import load_dotenv, find_dotenv
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import StandardScaler
@@ -55,16 +56,9 @@ data_max = (data_max
             .drop('count',1)
             )
 
-# preprocessing: scaling lat and lon
-lat_scale,lon_scale = StandardScaler(), StandardScaler()
-data_max['lat'] = lat_scale.fit_transform(data_max['lat'].reshape(-1, 1), [0,1])
-data_max['lon'] = lon_scale.fit_transform(data_max['lon'].reshape(-1, 1), [0,1])
-
 data_max = (data_max.merge(gatrain[['device_id','trainrow']], on='device_id', how='left')
                     .merge(gatest[['device_id','testrow']], on='device_id', how='left')
                     )
-
-
 
 # generate sparse data for logistic classifier
 lat_encoder = LabelEncoder().fit(data_max['lat'])
@@ -93,5 +87,5 @@ Xtrain = hstack((Xtr_lat, Xtr_lon), format='csr')
 Xtest =  hstack((Xte_lat, Xte_lon), format='csr')
 
 #save sparse dataset
-io.mmwrite(path.join(FEATURES_DATA_DIR, 'position_sparse_train'), Xtrain)
-io.mmwrite(path.join(FEATURES_DATA_DIR, 'position_sparse_test'), Xtest)
+io.mmwrite(path.join(FEATURES_DATA_DIR, 'sparse_position_train'), Xtrain)
+io.mmwrite(path.join(FEATURES_DATA_DIR, 'sparse_position_test'), Xtest)

@@ -6,6 +6,8 @@ from os import path
 import pandas as pd
 import pickle as pkl
 from scripts import *
+from scipy import sparse, io
+from scipy.sparse import csr_matrix, hstack
 from dotenv import load_dotenv, find_dotenv
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import StandardScaler
@@ -47,6 +49,7 @@ phone = phone.merge(specs_table[['phone_brand', 'device_model', 'price_eur']],
                  suffixes=['', '_R'])
 
 phone['price_eur'] = phone['price_eur'].fillna(-1)
+
 phone = (phone.set_index('device_id').join(gatrain[['trainrow']], how='left')
                                      .join(gatest[['testrow']], how='left'))
 
@@ -107,5 +110,5 @@ train = hstack( (Xtr_brand, Xtr_model), format='csr')
 test = hstack( (Xte_brand, Xte_model), format='csr')
 
 #save
-io.mmwrite(path.join(FEATURES_DATA_DIR, 'brand_model_price_sparse_train'), train)
-io.mmwrite(path.join(FEATURES_DATA_DIR, 'brand_model_price_sparse_test'), test)
+io.mmwrite(path.join(FEATURES_DATA_DIR, 'sparse_brand_model_price_train'), train)
+io.mmwrite(path.join(FEATURES_DATA_DIR, 'sparse_brand_model_price_test'), test)

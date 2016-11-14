@@ -64,19 +64,12 @@ data_max = (data_max.merge(gatrain[['device_id','trainrow']], on='device_id', ho
                     .merge(gatest[['device_id','testrow']], on='device_id', how='left')
                     )
 
+data_max = data_max.drop(['event_id', 'timestamp'],1)
+
 # generate dense data for random forest
-train_data = data_max.dropna(subset=['trainrow']).drop(['trainrow', 'testrow'],1)
-test_data = data_max.dropna(subset=['testrow']).drop(['trainrow', 'testrow'],1)
-
-# generate sparse data for logistic classifier
-lat_encoder = LabelEncoder().fit(data_max['lat'])
-train_data['lat'] = lat_encoder.transform(train_data['lat'])
-test_data['lat'] = lat_encoder.transform(test_data['lat'])
-
-lon_encoder = LabelEncoder().fit(data_max['lon'])
-train_data['lon'] = lon_encoder.transform(train_data['lon'])
-test_data['lon'] = lon_encoder.transform(test_data['lon'])
+train_data = data_max.dropna(subset=['trainrow']).drop(['testrow'],1)
+test_data = data_max.dropna(subset=['testrow']).drop(['trainrow'],1)
 
 #save dense dataset
-train_data.to_csv(os.path.join(FEATURES_DATA_DIR, 'position_dense_train.csv'), index=False)
-test_data.to_csv(os.path.join(FEATURES_DATA_DIR, 'position_dense_test.csv'), index=False)
+train_data.to_csv(os.path.join(FEATURES_DATA_DIR, 'dense_position_train.csv'), index=False)
+test_data.to_csv(os.path.join(FEATURES_DATA_DIR, 'dense_position_test.csv'), index=False)

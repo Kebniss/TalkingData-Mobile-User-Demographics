@@ -47,6 +47,9 @@ phone = phone.merge(specs_table[['phone_brand', 'device_model', 'price_eur']],
 
 phone['price_eur'] = phone['price_eur'].fillna(-1)
 
+phone = (phone.set_index('device_id').join(gatrain[['trainrow']], how='left')
+                                     .join(gatest[['testrow']], how='left'))
+
 # encoding and scaling all features to a distribution with mean = 0
 phone['device_model'] = phone['phone_brand'] + phone['device_model']
 
@@ -63,5 +66,9 @@ phone['phone_brand'] = brand_scale.transform(phone['phone_brand'].reshape(-1,1))
 phone['device_model'] = model_scale.transform(phone['device_model'].reshape(-1,1))
 phone['price_eur'] = price_scale.transform(phone['price_eur'].reshape(-1,1))
 
+phone_train = phone.dropna(subset=['trainrow']).drop(['testrow'],1)
+phone_test = phone.dropna(subset=['testrow']).drop(['trainrow'],1)
+
 #save
-phone.to_csv(path.join(RAW_DATA_DIR, 'dense_phone_brand_model_price.csv'), index=False)
+phone_train.to_csv(path.join(FEATURES_DATA_DIR, 'dense_brand_model_price_train.csv'))
+phone_test.to_csv(path.join(FEATURES_DATA_DIR, 'dense__brand_model_price_test.csv'))
