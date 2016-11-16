@@ -21,13 +21,16 @@ io.mmwrite(path.join(FEATURES_DATA_DIR, 'sparse_test_p_al_d'), test_set)
 
 
 # MAKE DENSE FEATURES --------------------------------------------------------
-phone_d = pd.read_csv(path.join(FEATURES_DATA_DIR, 'dense_brand_model_price_test')
-                      , index_col='trainrow').drop(['device_id'], 1)
-app_labels_d = pd.read_csv(path.join(FEATURES_DATA_DIR, 'dense_500SVD_cum_app_labels_test'))
-distance_d = pd.read_csv(path.join(FEATURES_DATA_DIR, 'dense_position_test')
-                         , index_col='trainrow').drop(['device_id'], 1)
+phone_d = pd.read_csv(path.join(FEATURES_DATA_DIR, 'dense_brand_model_price_test.csv')
+                      , index_col='testrow').drop(['device_id'], 1)
+app_labels_d = pd.read_csv(path.join(FEATURES_DATA_DIR, 'dense_500SVD_cum_app_labels_test.csv'))
+distance_d = pd.read_csv(path.join(FEATURES_DATA_DIR, 'dense_position_test.csv')
+                         , index_col='testrow').drop(['device_id'], 1)
 
-test_det = (phone_d.join(app_labels_d, how='left')
-                    .join(distance_d, how='left'))
+test = (phone_d.join(app_labels_d, how='outer')
+               .join(distance_d, how='outer'))
 
-test_set.to_csv(path.join(FEATURES_DATA_DIR, 'dense_test_p_al_d'))
+for col in test.columns:
+    test[col] = test[col].fillna(test[col].mean(0))
+
+test.to_csv(path.join(FEATURES_DATA_DIR, 'dense_test_p_al_d.csv'), index=False)

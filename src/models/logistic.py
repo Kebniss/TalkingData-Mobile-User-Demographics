@@ -1,4 +1,4 @@
-''' THIS MODEL SCORES 2.40 ON KAGGLE'''
+''' THIS MODEL SCORES 2.36923 ON KAGGLE'''
 
 import os
 import pickle
@@ -23,7 +23,7 @@ RAW_DATA_DIR = os.environ.get("RAW_DATA_DIR")
 FEATURES_DATA_DIR = os.environ.get("FEATURES_DIR")
 MODELS_DIR = os.environ.get("MODELS_DIR")
 
-data = io.mmread(path.join(FEATURES_DATA_DIR, 'train_set_dd_enh')).tocsr()
+data = io.mmread(path.join(FEATURES_DATA_DIR, 'sparse_train_p_al_d')).tocsr()
 gatrain = pd.read_csv(os.path.join(RAW_DATA_DIR,'gender_age_train.csv'),
                       index_col='device_id')
 labels = gatrain['group']
@@ -31,7 +31,7 @@ targetencoder = LabelEncoder().fit(labels)
 y = targetencoder.transform(labels)
 nclasses = len(targetencoder.classes_)
 
-with open(path.join(FEATURES_DATA_DIR, 'targetencoder.pkl'), 'wb') as f:
+with open(path.join(FEATURES_DATA_DIR, 'targetencoder_logistic.pkl'), 'wb') as f:
     pickle.dump(targetencoder, f)
 
 def score(clf, X, y, nclasses, random_state=None):
@@ -46,15 +46,14 @@ def score(clf, X, y, nclasses, random_state=None):
     return log_loss(y, pred)
 
 Cs = np.logspace(-5,0,7)
-res = []
+res1 = []
+res2 = []
 for C in Cs:
-    res.append(score(LogisticRegression(C = C), data, y, nclasses))
-plt.semilogx(Cs, res,'-o')
-
-score(LogisticRegression(C=0.03), data, y, nclasses)
-
-score(LogisticRegression(C=0.001, multi_class='multinomial',solver='lbfgs'),
-      data, y, nclasses)
+    res1.append(score(LogisticRegression(C = C), data, y, nclasses))
+    res2.append(score(LogisticRegression(C = C, multi_class='multinomial',solver='lbfgs')
+                      , data, y, nclasses))
+plt.semilogx(Cs, res1,'-o')
+plt.semilogx(Cs, res2,'-o')
 
 clf = LogisticRegression(C=0.03)
 clf.fit(data, y)

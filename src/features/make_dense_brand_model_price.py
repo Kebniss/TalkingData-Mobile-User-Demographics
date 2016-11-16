@@ -71,4 +71,4 @@ phone_test = phone.dropna(subset=['testrow']).drop(['trainrow'],1)
 
 #save
 phone_train.to_csv(path.join(FEATURES_DATA_DIR, 'dense_brand_model_price_train.csv'))
-phone_test.to_csv(path.join(FEATURES_DATA_DIR, 'dense__brand_model_price_test.csv'))
+phone_test.to_csv(path.join(FEATURES_DATA_DIR, 'dense_brand_model_price_test.csv'))

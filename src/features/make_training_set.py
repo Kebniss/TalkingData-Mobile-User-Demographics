@@ -35,4 +35,4 @@ train = (phone_d.join(app_labels_d, how='outer')
 for col in train.columns:
     train[col] = train[col].fillna(train[col].mean(0))
 
-train.to_csv(path.join(FEATURES_DATA_DIR, 'dense_train_p_al_d.csv'))
+train.to_csv(path.join(FEATURES_DATA_DIR, 'dense_train_p_al_d.csv'), index=False)
