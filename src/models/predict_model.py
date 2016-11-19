@@ -25,7 +25,7 @@ gatest = pd.read_csv(os.path.join(RAW_DATA_DIR,'gender_age_test.csv'),
 # LOGISTIC -------------------------------------------------------------------
 data = io.mmread(path.join(FEATURES_DATA_DIR, 'sparse_test_p_al_d')).tocsr()
 
-with open(path.join(MODELS_DIR,'logistic_003c_specs_feat.pkl'), 'rb') as f:
+with open(path.join(MODELS_DIR,'logistic_003c_newton_specs_feat.pkl'), 'rb') as f:
     model = pickle.load(f)
 
 pred = model.predict_proba(data)
@@ -33,12 +33,13 @@ pred = model.predict_proba(data)
 with open(path.join(FEATURES_DATA_DIR, 'targetencoder_logistic.pkl'), 'rb') as f:
     targetencoder = pickle.load(f)
 
+# adding classes names as columns
 labels = targetencoder.inverse_transform(model.classes_)
 pred = pd.DataFrame(pred)
 pred.columns = labels
 pred['device_id'] = gatest.index
 
-pred.to_csv(path.join(PREDICTIONS_DIR, 'submission_logistic_003c_specs_feat.csv'), index=False)
+pred.to_csv(path.join(PREDICTIONS_DIR, 'logistic_003c_newton_specs_feat.csv'), index=False)
 
 
 # RANDOM FORESTS ------------------------------------------------------------

@@ -42,27 +42,15 @@ nclasses = len(targetencoder.classes_)
 with open(path.join(FEATURES_DATA_DIR, 'targetencoder_rf.pkl'), 'wb') as f:
     pickle.dump(targetencoder, f)
 
-def score(clf, X, y, nclasses, random_state=None):
-    kf=StratifiedKFold(y, n_folds=1, shuffle=True, random_state=random_state)
-    pred = np.zeros((y.shape[0], nclasses))
-    for itrain, itest in kf:
-        Xtr, Xte = X[itrain, :], X[itest, :]
-        ytr, yte = y[itrain], y[itest]
-        clf.fit(Xtr, ytr)
-        pred[itest, :] = clf.predict_proba(Xte)
-        return log_loss(yte, pred[itest])
-    return log_loss(y, pred)
-
-X, X_dev, y, y_dev = train_test_split(data,
+X, X_calibration, y, y_calibration = train_test_split(data,
                                       labels,
                                       test_size=0.20,
                                       random_state=0)
-# X_1, X_2, y_1, y_2 = train_test_split(X_dev,
-#                                       y_dev,
-#                                       test_size=0.30,
-#                                       random_state=0)
+
 parameters = {'max_depth': (3, 5, 6, 7, 8, 9, 11),
               'min_samples_split': (50, 100, 500, 1000)}
+
+
 f1_scorer = make_scorer(f1_score, greater_is_better=True, average='weighted')
 rfc = RandomForestClassifier(n_estimators=200,  n_jobs=4)
 clf = RandomizedSearchCV(rfc,
@@ -71,14 +59,11 @@ clf = RandomizedSearchCV(rfc,
                          n_iter=20,
                          random_state=42,
                          scoring=f1_scorer)
-t0 = time()
-clf.fit(X, y)
-t1 = time()
-(t1-t0)/60
-#y_pred = gbm.predict(X.as_matrix())
 
-sig_clf = CalibratedClassifierCV(clf, method='sigmoid', cv='prefit' )
-sig_clf.fit(X_dev, y_dev)
+clf.fit(X, y)
+
+sig_clf = CalibratedClassifierCV(clf, method='sigmoid', cv='prefit')
+sig_clf.fit(X_calibration, y_calibration)
 
 with open(path.join(MODELS_DIR, 'rfc_500.pkl'), 'wb') as f:
     pickle.dump(sig_clf, f)

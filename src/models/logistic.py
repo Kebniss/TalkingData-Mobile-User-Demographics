@@ -1,4 +1,5 @@
-''' THIS MODEL SCORES 2.36923 ON KAGGLE'''
+''' BASIC MODEL SCORES 2.36979 ON KAGGLE'''
+''' NEWTON MODEL SCORES 2.36923 ON KAGGLE'''
 
 import os
 import pickle
@@ -48,15 +49,31 @@ def score(clf, X, y, nclasses, random_state=None):
 Cs = np.logspace(-5,0,7)
 res1 = []
 res2 = []
+res3 = []
+res4 = []
+res5 = []
+res6 = []
 for C in Cs:
-    res1.append(score(LogisticRegression(C = C), data, y, nclasses))
-    res2.append(score(LogisticRegression(C = C, multi_class='multinomial',solver='lbfgs')
+    res1.append(score(LogisticRegression(C = C, n_jobs=4), data, y, nclasses))
+    res2.append(score(LogisticRegression(C = C, multi_class='multinomial',solver='lbfgs', n_jobs=4)
                       , data, y, nclasses))
-plt.semilogx(Cs, res1,'-o')
-plt.semilogx(Cs, res2,'-o')
-
-clf = LogisticRegression(C=0.03)
+    res3.append(score(LogisticRegression(C = C, class_weight='balanced', n_jobs=4), data, y, nclasses))
+    res4.append(score(LogisticRegression(C = C, multi_class='multinomial',solver='lbfgs', class_weight='balanced', n_jobs=4)
+                      , data, y, nclasses))
+    res5.append(score(LogisticRegression(C = C, multi_class='multinomial', solver='newton-cg', n_jobs=4)
+                      , data, y, nclasses))
+    res6.append(score(LogisticRegression(C = C, multi_class='multinomial', solver='newton-cg', class_weight='balanced', n_jobs=4)
+                          , data, y, nclasses))
+plt.semilogx(Cs, res1,'-o', label='basic')
+plt.semilogx(Cs, res2,'-o', label='multinomial lbfgs')
+plt.semilogx(Cs, res3,'-o', label='balanced')
+plt.semilogx(Cs, res4,'-o', label='multinomial  + balanced')
+plt.semilogx(Cs, res5,'-o', label='multinomial newton-cg')
+plt.semilogx(Cs, res6,'-o', label='multinomial newton-cg + balanced')
+plt.legend(loc=2)
+plt.savefig('log-loss errors', format='png')
+clf = LogisticRegression(C=0.03, multi_class='multinomial', solver='newton-cg', n_jobs=4)
 clf.fit(data, y)
 
-with open(path.join(MODELS_DIR, 'logistic_003c_specs_feat.pkl'), 'wb') as f:
+with open(path.join(MODELS_DIR, 'logistic_003c_newton_specs_feat.pkl'), 'wb') as f:
     pickle.dump(clf, f)
