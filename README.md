@@ -5,6 +5,8 @@ Datasets for Kaggle's challennge at https://www.kaggle.com/c/talkingdata-mobile-
 
 All the files must be downloaded and unzipped in data/raw.
 
+See requirement.txt for packages needed to run this project.
+
 Project Organization
 ------------
 
