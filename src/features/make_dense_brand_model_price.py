@@ -5,7 +5,6 @@ import os
 from os import path
 import pandas as pd
 import pickle as pkl
-from scripts import *
 from dotenv import load_dotenv, find_dotenv
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import StandardScaler

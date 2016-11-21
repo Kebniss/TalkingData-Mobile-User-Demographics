@@ -6,9 +6,7 @@ import sys
 from os import path
 import numpy as np
 import pandas as pd
-from scripts import *
 from scipy import sparse, io
-from drop_nans import drop_nans
 from scipy.sparse import csr_matrix, hstack
 from dotenv import load_dotenv, find_dotenv
 from sklearn.preprocessing import LabelEncoder

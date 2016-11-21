@@ -6,7 +6,6 @@ import os.path
 import numpy as np
 import pandas as pd
 from scipy import sparse, io
-from drop_nans import drop_nans
 from dotenv import load_dotenv, find_dotenv
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import StandardScaler
@@ -20,9 +19,6 @@ data = pd.read_csv(os.path.join(RAW_DATA_DIR, 'events.csv'),
                    parse_dates=['timestamp'],
                    infer_datetime_format=True)
 data.columns = ['event_id', 'device_id', 'timestamp', 'lon', 'lat']
-
-# find and remove nans
-data = drop_nans(data)
 
 lat_long_counts = data.groupby(['device_id', 'lat', 'lon'])['event_id'].agg(['count'])
 positions = lat_long_counts.reset_index(['lat', 'lon']).groupby(level=0).max()

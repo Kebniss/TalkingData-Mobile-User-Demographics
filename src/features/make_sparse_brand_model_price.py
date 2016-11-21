@@ -5,7 +5,6 @@ import os
 from os import path
 import pandas as pd
 import pickle as pkl
-from scripts import *
 from scipy import sparse, io
 from scipy.sparse import csr_matrix, hstack
 from dotenv import load_dotenv, find_dotenv
