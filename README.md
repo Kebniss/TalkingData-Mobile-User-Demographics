@@ -7,6 +7,17 @@ All the files must be downloaded and unzipped in data/raw.
 
 See requirement.txt for packages needed to run this project.
 
+Pipeline: 
+ - run all the make_features.py files in src/features
+ - run make_training/test\_set.py
+ - in src/models run baseline.py, logistic.py and randomforest.py to train the models
+ - in src/models run predict_models.py to obtain the predictions 
+
+ The whole data analysis is in notebooks
+
+ The validation of my results is in src/visualization/validation.py
+ 
+
 Project Organization
 ------------
 
@@ -55,12 +66,3 @@ Project Organization
     └── tox.ini            <- tox file with settings for running tox; see tox.testrun.org
 
 
-Pipeline: 
- - run all the make_features.py files in src/features
- - run make_training/test\_set.py
- - in src/models run baseline.py, logistic.py and randomforest.py to train the models
- - in src/models run predict_models.py to obtain the predictions 
-
- The whole data analysis is in notebooks
-
- The validation of my results is in src/visualization/validation.py
