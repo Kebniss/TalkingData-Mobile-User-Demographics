@@ -16,7 +16,6 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.grid_search import RandomizedSearchCV
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.cross_validation import StratifiedKFold
 from sklearn.cross_validation import train_test_split
 from sklearn.metrics import make_scorer, f1_score, confusion_matrix
 from sklearn.calibration import calibration_curve, CalibratedClassifierCV

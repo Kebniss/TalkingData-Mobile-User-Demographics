@@ -64,6 +64,7 @@ for C in Cs:
                       , data, y, nclasses))
     res6.append(score(LogisticRegression(C = C, multi_class='multinomial', solver='newton-cg', class_weight='balanced', n_jobs=4)
                           , data, y, nclasses))
+plt.figure(figsize=(12,6))
 plt.semilogx(Cs, res1,'-o', label='basic')
 plt.semilogx(Cs, res2,'-o', label='multinomial lbfgs')
 plt.semilogx(Cs, res3,'-o', label='balanced')
