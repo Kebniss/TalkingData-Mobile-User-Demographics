@@ -22,6 +22,7 @@ gatrain = pd.read_csv(os.path.join(RAW_DATA_DIR,'gender_age_train.csv'),
 gatest = pd.read_csv(os.path.join(RAW_DATA_DIR,'gender_age_test.csv'),
                      index_col = 'device_id')
 
+# add rownumber = encoding of device_id
 gatrain['trainrow'] = np.arange(gatrain.shape[0])
 gatest['testrow'] = np.arange(gatest.shape[0])
 
@@ -32,6 +33,7 @@ specs_table = pd.read_csv(path.join(FEATURES_DATA_DIR, 'specs_table.csv'))
 model_mapping = pd.read_csv(path.join(FEATURES_DATA_DIR, 'model_mapping.csv'))
 brand_mapping = pd.read_csv(path.join(FEATURES_DATA_DIR, 'brand_mapping.csv'))
 
+# join phone to add the phone price feature
 phone = phone.merge(brand_mapping, how='left', left_on='phone_brand',
                                       right_on='phone_brand_chinese')
 phone = phone.merge(model_mapping, how='left', left_on='device_model',
@@ -46,39 +48,33 @@ phone = phone.merge(specs_table[['phone_brand', 'device_model', 'price_eur']],
                  on=['phone_brand', 'device_model'],
                  how='left',
                  suffixes=['', '_R'])
-
 phone['price_eur'] = phone['price_eur'].fillna(-1)
 
+# add rows to separate training and test set
 phone = (phone.set_index('device_id').join(gatrain[['trainrow']], how='left')
                                      .join(gatest[['testrow']], how='left'))
-
+# scale the price
 price_scale = StandardScaler().fit(phone['price_eur'].reshape(-1,1))
 phone['price_eur'] = price_scale.transform(phone['price_eur'].reshape(-1,1))
 
+# encoding brand and model so to have an array of continous integers to use as
+# columns of the sparse matrix
 brandencoder = LabelEncoder().fit(phone['phone_brand'])
 phone['brand'] = brandencoder.transform(phone['phone_brand'])
 gatrain['brand'] = phone['brand']
 gatest['brand'] = phone['brand']
 
-# encoding and scaling all features to a distribution with mean = 0
 phone['model'] = phone['phone_brand'].str.cat(phone['device_model'])
 modelencoder = LabelEncoder().fit(phone['model'])
 phone['model'] = modelencoder.transform(phone['model'])
 gatrain['model'] = phone['model']
 gatest['model'] = phone['model']
 
-
 phone_train = phone.dropna(subset=['trainrow']).drop('testrow',1)
 phone_test = phone.dropna(subset=['testrow']).drop('trainrow',1)
 
-assert phone_train.reset_index()['device_id'].nunique() == phone_train.shape[0]
-assert sorted(phone_train.reset_index()['device_id']) == sorted(gatrain.reset_index()['device_id'])
-
-assert phone_test.reset_index()['device_id'].nunique() == phone_test.shape[0]
-assert sorted(phone_test.reset_index()['device_id']) == sorted(gatest.reset_index()['device_id'])
-
 # PHONE BRAND ---------------------------------------------------------------
-
+# create sparse matrices for training and test set
 nbrands = brandencoder.classes_.shape[0]
 d = phone_train.reset_index()
 Xtr_brand = csr_matrix( ( d['price_eur'], (d['trainrow'], d['brand']) ),

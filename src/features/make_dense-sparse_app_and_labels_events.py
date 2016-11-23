@@ -1,5 +1,5 @@
-""" This script loads the raw app_events dataset, creates the
-    features and deals with NaN values."""
+""" This script loads the raw app_events dataset and creates the dense and
+    sparse features"""
 
 import os
 import sys
@@ -25,6 +25,7 @@ gatrain = pd.read_csv(os.path.join(RAW_DATA_DIR,'gender_age_train.csv'),
 gatest = pd.read_csv(os.path.join(RAW_DATA_DIR,'gender_age_test.csv'),
                      index_col = 'device_id')
 
+# add rownumber = encoding of device_id
 gatrain['trainrow'] = np.arange(gatrain.shape[0])
 gatest['testrow'] = np.arange(gatest.shape[0])
 
@@ -38,6 +39,7 @@ appevents = pd.read_csv(path.join(RAW_DATA_DIR, 'app_events.csv'),
 
 applabels = pd.read_csv(os.path.join(RAW_DATA_DIR, 'app_labels.csv'))
 
+# encoding app_id so to have an array of continous integers to use as columns of sparse matrix
 appencoder = LabelEncoder().fit(appevents['app_id'])
 appevents['app'] = appencoder.transform(appevents['app_id'])
 napps = len(appencoder.classes_)
@@ -45,6 +47,7 @@ napps = len(appencoder.classes_)
 installed = appevents.drop('is_active',1).query('is_installed == 1')
 active = appevents.drop('is_installed',1).query('is_active == 1')
 
+# count installed apps per device_id
 installed_deviceapps = ( installed.merge(events[['device_id']],
                                          how='left',
                                          left_on='event_id',
@@ -59,12 +62,16 @@ installed_deviceapps = ( installed_deviceapps.join(gatrain[['trainrow']], how='l
                         )
 installed_deviceapps.head()
 
+# calculate the total number of app installed per device_id
 total_installed = installed_deviceapps.groupby('device_id')['count'].agg(['sum'])
 installed_deviceapps = installed_deviceapps.set_index('device_id')
+# for each device_id divide each app_id count by the total number of app
+# isntalled on that device = estimation of frequency of use of one app by single user
 for d_id in total_installed.index.values:
     installed_deviceapps.loc[d_id,'count'] = installed_deviceapps.ix[d_id]['count']/total_installed.ix[d_id].values
 installed_deviceapps = installed_deviceapps.reset_index('device_id')
 
+# scale frequency
 installed_apps_scaler = StandardScaler()
 installed_deviceapps['count'] = installed_apps_scaler.fit_transform(installed_deviceapps['count'].reshape(-1, 1), [0,1])
 
@@ -80,6 +87,8 @@ Xte_app_inst = csr_matrix( (d['count'], (d['testrow'], d['app'])),
                           )
 
 # ACTIVE APPS
+
+# count active apps per device_id
 active_deviceapps = ( active.merge(events[['device_id']],
                                    how='left',
                                    left_on='event_id',
@@ -94,8 +103,11 @@ active_deviceapps = ( active_deviceapps.join(gatrain[['trainrow']], how='left')
                      )
 active_deviceapps.head()
 
+# calculate the total number of app installed per device_id
 total_active = active_deviceapps.groupby('device_id')['count'].agg(['sum'])
 active_deviceapps = active_deviceapps.set_index('device_id')
+# for each device_id divide each app_id count by the total number of app
+# active on that device = estimation of frequency of use of one app by single user
 for d_id in total_active.index.values:
     active_deviceapps.loc[d_id,'count'] = active_deviceapps.ix[d_id]['count']/total_active.ix[d_id].values
 active_deviceapps = active_deviceapps.reset_index('device_id')

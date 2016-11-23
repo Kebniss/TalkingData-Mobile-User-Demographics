@@ -1,5 +1,4 @@
-""" This script loads the raw events dataset, creates the
-    features and deals with NaN values."""
+""" This script loads the raw events dataset and creates the dense features"""
 
 import os
 import os.path
@@ -20,18 +19,19 @@ data = pd.read_csv(os.path.join(RAW_DATA_DIR, 'events.csv'),
                    infer_datetime_format=True)
 data.columns = ['event_id', 'device_id', 'timestamp', 'lon', 'lat']
 
-lat_long_counts = data.groupby(['device_id', 'lat', 'lon'])['event_id'].agg(['count'])
-positions = lat_long_counts.reset_index(['lat', 'lon']).groupby(level=0).max()
 gatrain = pd.read_csv(os.path.join(RAW_DATA_DIR,'gender_age_train.csv'))
 gatest = pd.read_csv(os.path.join(RAW_DATA_DIR,'gender_age_test.csv'))
 
+# add rownumber = encoding of device_id
 gatrain['trainrow'] = np.arange(gatrain.shape[0])
 gatest['testrow'] = np.arange(gatest.shape[0])
 
+# count the number of events per position per user
 tex_lat_long_counts = (data
                        .groupby(['device_id', 'lat', 'lon'])['event_id']
                        .agg(['count'])
                        )
+# select the pair lat, lon visited the most
 tex_lat_long_counts = (tex_lat_long_counts.join(tex_lat_long_counts
                                                 .groupby(level=0)
                                                 .max()
@@ -41,13 +41,13 @@ tex_lat_long_counts = (tex_lat_long_counts
                        .query("count == count_max")
                        .drop("count_max", axis=1)
                        )
+
 data = data.set_index(['device_id', 'lat', 'lon'])
 data_max = tex_lat_long_counts.join(data, how='left')
-# keep = last avoids that when for a d_id there are two or more euqally frequent
-# positions the tuple lo0,la0 is picked if it is the first value
+# some d_id have 2+ positions with the same count last picks the one with lo and la the biggest
 data_max = (data_max
             .reset_index()
-            .drop_duplicates(subset='device_id', keep='last') # avoids (lo0,la0)
+            .drop_duplicates(subset='device_id', keep='last') # last avoids (lo0,la0)
             .drop('count',1)
             )
 

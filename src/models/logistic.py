@@ -39,7 +39,7 @@ with open(path.join(FEATURES_DATA_DIR, 'targetencoder_logistic.pkl'), 'wb') as f
     pickle.dump(targetencoder, f) # saving the labels to unpack after prediction
 
 def score(clf, X, y, nclasses, random_state=None):
-    ''' Use CV to measure the log-loss averaged over 5 different datasets'''
+    # Use CV to measure the log-loss averaged over 5 different datasets
     kf=StratifiedKFold(y, n_folds=5, shuffle=True, random_state=random_state)
     pred = np.zeros((y.shape[0], nclasses))
     for itrain, itest in kf:
