@@ -1,3 +1,5 @@
+""" This script loads the dense training data, encodes the target labels and
+    trains a random forest model using CV. The best estimator is saved"""
 ''' BASIC MODEL SCORES 2.36979 ON KAGGLE'''
 ''' NEWTON MODEL SCORES 2.36923 ON KAGGLE'''
 
@@ -27,15 +29,17 @@ MODELS_DIR = os.environ.get("MODELS_DIR")
 data = io.mmread(path.join(FEATURES_DATA_DIR, 'sparse_train_p_al_d')).tocsr()
 gatrain = pd.read_csv(os.path.join(RAW_DATA_DIR,'gender_age_train.csv'),
                       index_col='device_id')
+
 labels = gatrain['group']
-targetencoder = LabelEncoder().fit(labels)
+targetencoder = LabelEncoder().fit(labels) # encoding target labels
 y = targetencoder.transform(labels)
 nclasses = len(targetencoder.classes_)
 
 with open(path.join(FEATURES_DATA_DIR, 'targetencoder_logistic.pkl'), 'wb') as f:
-    pickle.dump(targetencoder, f)
+    pickle.dump(targetencoder, f) # saving the labels to unpack after prediction
 
 def score(clf, X, y, nclasses, random_state=None):
+    ''' Use CV to measure the log-loss averaged over 5 different datasets'''
     kf=StratifiedKFold(y, n_folds=5, shuffle=True, random_state=random_state)
     pred = np.zeros((y.shape[0], nclasses))
     for itrain, itest in kf:
@@ -53,7 +57,7 @@ res3 = []
 res4 = []
 res5 = []
 res6 = []
-for C in Cs:
+for C in Cs: # select  the best hyperparameters
     res1.append(score(LogisticRegression(C = C, n_jobs=4), data, y, nclasses))
     res2.append(score(LogisticRegression(C = C, multi_class='multinomial',solver='lbfgs', n_jobs=4)
                       , data, y, nclasses))
@@ -77,4 +81,4 @@ clf = LogisticRegression(C=0.03, multi_class='multinomial', solver='newton-cg', 
 clf.fit(data, y)
 
 with open(path.join(MODELS_DIR, 'logistic_003c_newton_specs_feat.pkl'), 'wb') as f:
-    pickle.dump(clf, f)
+    pickle.dump(clf, f) # save the model

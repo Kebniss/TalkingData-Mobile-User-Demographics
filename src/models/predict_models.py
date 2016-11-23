@@ -1,4 +1,5 @@
-
+""" This script loads the two models, generates their predictions and saves the
+    result in format compatible with Kaggle's submission example"""
 import os
 import pickle
 import numpy as np
