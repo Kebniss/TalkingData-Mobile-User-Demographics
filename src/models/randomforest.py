@@ -22,8 +22,6 @@ from sklearn.cross_validation import train_test_split
 from sklearn.metrics import make_scorer, f1_score, confusion_matrix
 from sklearn.calibration import calibration_curve, CalibratedClassifierCV
 
-%matplotlib inline
-
 dotenv_path = find_dotenv()
 load_dotenv(dotenv_path)
 
@@ -48,15 +46,16 @@ X, X_calibration, y, y_calibration = train_test_split(data,
                                       test_size=0.20,
                                       random_state=0)
 
-parameters = {'max_depth': (3, 5, 6, 7, 8, 9, 11),
-              'min_samples_split': (50, 100, 500, 1000)}
+parameters = {'max_depth': (3, 4, 5, 6, 7, 8, 9, 10, 11),
+              'min_samples_split': (50, 100, 500, 1000),
+              'max_features': (30, 50, 100, 150, 200)}
 
 f1_scorer = make_scorer(f1_score, greater_is_better=True, average='weighted')
 rfc = RandomForestClassifier(n_estimators=200,  n_jobs=4)
 clf = RandomizedSearchCV(rfc, # select  the best hyperparameters
                          parameters,
                          n_jobs=4,
-                         n_iter=20,
+                         n_iter=30,
                          random_state=42,
                          scoring=f1_scorer)
 
