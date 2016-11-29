@@ -1,6 +1,6 @@
 """ This script loads the dense training data, encodes the target labels and
     trains a random forest model using CV. The best estimator is saved"""
-''' THIS MODEL WITH MY FEATURES OBTAINS A SCORE OF 2.38610 ON KAGGLE'''
+''' THIS MODEL WITH MY FEATURES OBTAINS A SCORE OF 2.38088 ON KAGGLE'''
 
 import os
 import pickle
@@ -48,21 +48,21 @@ X, X_calibration, y, y_calibration = train_test_split(data,
 
 parameters = {'max_depth': (3, 4, 5, 6, 7, 8, 9, 10, 11),
               'min_samples_split': (50, 100, 500, 1000),
-              'max_features': (30, 50, 100, 150, 200)}
+              'max_features': (30, 50, 100, 150, 200, 300, 500)}
 
 f1_scorer = make_scorer(f1_score, greater_is_better=True, average='weighted')
 rfc = RandomForestClassifier(n_estimators=200,  n_jobs=4)
 clf = RandomizedSearchCV(rfc, # select  the best hyperparameters
                          parameters,
                          n_jobs=4,
-                         n_iter=30,
+                         n_iter=40,
                          random_state=42,
                          scoring=f1_scorer)
 
 clf.fit(X, y)
-
+clf.best_params_
 # calibrating the model
-sig_clf = CalibratedClassifierCV(clf, method='sigmoid', cv='prefit')
+sig_clf = CalibratedClassifierCV(clf.best_estimator_, method='sigmoid', cv='prefit')
 sig_clf.fit(X_calibration, y_calibration)
 
 with open(path.join(MODELS_DIR, 'rfc_500.pkl'), 'wb') as f:
